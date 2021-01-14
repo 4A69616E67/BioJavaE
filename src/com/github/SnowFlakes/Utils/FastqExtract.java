@@ -2,14 +2,17 @@ package com.github.SnowFlakes.Utils;
 
 import com.github.SnowFlakes.File.CommonFile.CommonFile;
 import com.github.SnowFlakes.File.FastQFile.FastqFile;
-import com.github.SnowFlakes.File.FastQFile.FastqItem;
+import com.github.SnowFlakes.IO.FastqReaderExtension;
+import com.github.SnowFlakes.IO.FastqWriterExtension;
 import com.github.SnowFlakes.unit.Opts;
 import com.github.SnowFlakes.unit.Parameter;
 
+import htsjdk.samtools.fastq.FastqRecord;
 import org.apache.commons.cli.*;
 import org.apache.commons.io.FileUtils;
 
-import java.io.BufferedWriter;
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashSet;
 
@@ -47,41 +50,42 @@ public class FastqExtract {
                 : new FastqFile(inputFile.getPath() + ".out");
         CommonFile listfile = ComLine.hasOption("list") ? new CommonFile(Parameter.GetStringOpt(ComLine, "list", null))
                 : null;
-        int LineNum = Parameter.GetIntOpt(ComLine, "n", 0);
+        int ItemNum = Parameter.GetIntOpt(ComLine, "n", 0);
         int threads = Parameter.GetIntOpt(ComLine, "t", 1);
         FastqFile TempFile;
         HashSet<String> IDList = new HashSet<>();
-        String[] line;
+        FastqRecord item;
+        String line;
         if (listfile != null) {
-            listfile.ReadOpen();
-            while ((line = listfile.ReadItemLine()) != null) {
-                IDList.add(line[0]);
+            BufferedReader list_reader = new BufferedReader(new FileReader(listfile));
+            while ((line = list_reader.readLine()) != null) {
+                IDList.add(line);
             }
             listfile.ReadClose();
         }
-        if (LineNum <= 0) {
+        if (ItemNum <= 0) {
             TempFile = inputFile;
         } else {
             TempFile = new FastqFile(inputFile.getPath() + ".temp");
-            BufferedWriter writer = TempFile.WriteOpen();
-            inputFile.ReadOpen();
+            FastqWriterExtension writer = new FastqWriterExtension(TempFile);
+            FastqReaderExtension reader = new FastqReaderExtension(inputFile);
             int count = 1;
-            while ((line = inputFile.ReadItemLine()) != null && count <= LineNum) {
-                writer.write(String.join("\n", line) + "\n");
+            while ((item = reader.ReadRecode()) != null && count <= ItemNum) {
+                writer.WriterRecodeln(item);
                 count++;
             }
             writer.close();
-            inputFile.ReadClose();
+            reader.close();
         }
         if (listfile == null) {
             FileUtils.moveFile(TempFile, outputFile);
         } else {
-            outputFile.WriteOpen();
-            for (FastqItem i : TempFile.ExtractID(IDList, threads)) {
-                outputFile.WriteItemln(i);
+            FastqWriterExtension writer = new FastqWriterExtension(outputFile);
+            for (FastqRecord i : TempFile.ExtractID(IDList, threads)) {
+                writer.WriterRecodeln(i);
             }
-            outputFile.WriteClose();
-            if (LineNum > 0) {
+            writer.close();
+            if (ItemNum > 0) {
                 TempFile.delete();
             }
         }
