@@ -1,6 +1,6 @@
 package com.github.SnowFlakes.Utils;
 
-import com.github.SnowFlakes.File.BedPeFile.BedpeFile;
+import com.github.SnowFlakes.File.BedPeFile.BedPeFile;
 import com.github.SnowFlakes.File.BedPeFile.BedpeItem;
 import com.github.SnowFlakes.File.CommonFile.CommonFile;
 import com.github.SnowFlakes.unit.ChrRegion;
@@ -14,13 +14,13 @@ import java.util.Date;
 
 public class Conversion {
     public static void main(String[] args) throws IOException {
-        Conversion.run(new BedpeFile(args[0]), new CommonFile(args[1]));
+        Conversion.run(new BedPeFile(args[0]), new CommonFile(args[1]));
     }
 
-    public static void run(BedpeFile inFile, CommonFile outFile) throws IOException {
+    public static void run(BedPeFile inFile, CommonFile outFile) throws IOException {
         if (!inFile.isSorted()) {
-            inFile.SplitSortFile(new BedpeFile(inFile + ".sort"), new BedpeItem.LocationComparator());
-            inFile = new BedpeFile(inFile + ".sort");
+            inFile.SplitSortFile(new BedPeFile(inFile + ".sort"), new BedpeItem.LocationComparator());
+            inFile = new BedPeFile(inFile + ".sort");
         }
         inFile.ReadOpen();
         inFile.ItemNum = 0;

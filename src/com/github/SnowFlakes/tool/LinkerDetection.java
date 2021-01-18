@@ -1,6 +1,6 @@
 package com.github.SnowFlakes.tool;
 
-import com.github.SnowFlakes.File.FastQFile.FastqFile;
+import com.github.SnowFlakes.File.FastqFile;
 import com.github.SnowFlakes.File.FastQFile.FastqItem;
 import com.github.SnowFlakes.FragmentDigested.RestrictionEnzyme;
 import com.github.SnowFlakes.Sequence.DNASequence;

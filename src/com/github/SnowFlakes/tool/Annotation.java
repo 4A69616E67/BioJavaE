@@ -1,7 +1,7 @@
 package com.github.SnowFlakes.tool;
 
-import com.github.SnowFlakes.File.BedPeFile.BedpeFile;
-import com.github.SnowFlakes.File.GffFile.GffFile;
+import com.github.SnowFlakes.File.BedPeFile.BedPeFile;
+import com.github.SnowFlakes.File.GffFile.GFF3File;
 import com.github.SnowFlakes.unit.Opts;
 
 import java.io.IOException;
@@ -18,9 +18,9 @@ public class Annotation {
             System.err.println("usage: java -cp " + Opts.JarFile + " " + Annotation.class.getName() + " <inpute bedpe file> <gff file> <output bedpe file>");
             System.exit(1);
         }
-        BedpeFile inFile = new BedpeFile(args[0]);
-        GffFile gffFile = new GffFile(args[1]);
-        BedpeFile outFile = new BedpeFile(args[2]);
+        BedPeFile inFile = new BedPeFile(args[0]);
+        GFF3File gffFile = new GFF3File(args[1]);
+        BedPeFile outFile = new BedPeFile(args[2]);
         int thread = 0;
         if (args.length >= 4) {
             try {

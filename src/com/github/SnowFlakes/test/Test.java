@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 import com.github.SnowFlakes.File.CommonFile.CommonFile;
-import com.github.SnowFlakes.File.FastaFile.FastaFile;
+import com.github.SnowFlakes.File.FastaFile;
 import com.github.SnowFlakes.File.FastaFile.FastaItem;
 import com.github.SnowFlakes.unit.Opts;
 

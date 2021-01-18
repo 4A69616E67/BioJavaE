@@ -1,62 +1,80 @@
 package com.github.SnowFlakes.File.BedFile;
 
 import com.github.SnowFlakes.File.AbstractFile;
-import com.github.SnowFlakes.File.CommonFile.CommonFile;
+import com.github.SnowFlakes.IO.BedReaderExtension;
+import com.github.SnowFlakes.IO.BedWriterExtension;
 
-import java.io.IOException;
-import java.util.ArrayList;
+import java.io.*;
 import java.util.Comparator;
 
 /**
  * Created by snowf on 2019/2/17.
  */
 public class BedFile extends AbstractFile<BedItem> {
+    public enum Format {
+        BED6, BED12
+    }
+
     public short DeBugLevel = 0;
 
     public BedFile(String pathname) {
         super(pathname);
     }
 
-    private BedFile(AbstractFile<?> file) {
+    @Override
+    public BedReaderExtension getReader() {
+        try {
+            return new BedReaderExtension(new FileInputStream(this));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @Override
+    public BedWriterExtension getWriter() {
+        return getWriter(false);
+    }
+
+    @Override
+    public BedWriterExtension getWriter(boolean append) {
+        try {
+            return new BedWriterExtension(new FileWriter(this));
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private BedFile(BedFile file) {
         super(file);
     }
 
-    @Override
-    protected BedItem ExtractItem(String[] s) {
-        BedItem Item;
-        if (s != null) {
-            Item = new BedItem(s[0].split("\\s+"));
-            // Item.SortBy = SortBy;
-        } else {
-            Item = null;
-        }
-        return Item;
-    }
 
-    public void SplitSortFile(BedFile OutFile, Comparator<BedItem> comparator) throws IOException {
-        int splitItemNum = 1000000;
-        ItemNum = getItemNum();
-        if (this.ItemNum > splitItemNum) {
-            splitItemNum = (int) Math.ceil(this.ItemNum / Math.ceil((double) this.ItemNum / splitItemNum));
-            ArrayList<CommonFile> TempSplitFile = this.SplitFile(this.getPath(), splitItemNum);
-            BedFile[] TempSplitSortFile = new BedFile[TempSplitFile.size()];
-            for (int i = 0; i < TempSplitFile.size(); i++) {
-                TempSplitSortFile[i] = new BedFile(TempSplitFile.get(i).getPath() + ".sort");
-                new BedFile(TempSplitFile.get(i)).SortFile(TempSplitSortFile[i], comparator);
-            }
-            OutFile.MergeSortFile(TempSplitSortFile, comparator);
-            for (int i = 0; i < TempSplitFile.size(); i++) {
-                AbstractFile.delete(TempSplitFile.get(i));
-                AbstractFile.delete(TempSplitSortFile[i]);
-            }
-        } else {
-            this.SortFile(OutFile, comparator);
+    public class NameComparator implements Comparator<BedItem> {
+
+        @Override
+        public int compare(BedItem o1, BedItem o2) {
+            return o1.getName().compareTo(o2.getName());
         }
     }
 
-    @Override
-    public void WriteItem(BedItem item) throws IOException {
-        writer.write(item.toString());
+    public class LocationComparator implements Comparator<BedItem> {
+
+        @Override
+        public int compare(BedItem o1, BedItem o2) {
+            int res = o1.getContig().compareToIgnoreCase(o2.getContig());
+            if (res == 0) {
+                res = o1.getStart() - o2.getStart();
+                if (res == 0) {
+                    return o1.getEnd() - o2.getEnd();
+                } else {
+                    return res;
+                }
+            } else {
+                return res;
+            }
+        }
     }
 
 }

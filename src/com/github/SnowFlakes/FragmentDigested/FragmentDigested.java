@@ -3,7 +3,7 @@ package com.github.SnowFlakes.FragmentDigested;
 import com.github.SnowFlakes.File.BedFile.BedFile;
 import com.github.SnowFlakes.File.BedFile.BedItem;
 import com.github.SnowFlakes.File.CommonFile.CommonFile;
-import com.github.SnowFlakes.File.FastaFile.FastaFile;
+import com.github.SnowFlakes.File.FastaFile;
 import com.github.SnowFlakes.File.FastaFile.FastaItem;
 import com.github.SnowFlakes.tool.Tools;
 import com.github.SnowFlakes.unit.ChrRegion;

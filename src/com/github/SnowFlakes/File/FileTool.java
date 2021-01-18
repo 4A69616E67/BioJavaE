@@ -1,8 +1,6 @@
 package com.github.SnowFlakes.File;
 
-import com.github.SnowFlakes.File.FastQFile.FastqFile;
 import com.github.SnowFlakes.File.FastQFile.FastqItem;
-import com.github.SnowFlakes.File.FastaFile.FastaFile;
 import com.github.SnowFlakes.File.FastaFile.FastaItem;
 import com.github.SnowFlakes.Software.MAFFT;
 import com.github.SnowFlakes.unit.*;

@@ -2,14 +2,14 @@ package com.github.SnowFlakes.Utils;
 
 import java.util.*;
 
-import com.github.SnowFlakes.File.BedPeFile.BedpeFile;
+import com.github.SnowFlakes.File.BedPeFile.BedPeFile;
 import com.github.SnowFlakes.unit.*;
 import org.apache.commons.cli.*;
 
 public class PetCluster {
     private String OutPrefix;
     private int Length;
-    private BedpeFile InFile;
+    private BedPeFile InFile;
     private ArrayList<InterAction> List = new ArrayList<>();
     private ArrayList<InterAction> Cluster = new ArrayList<>();
     private Hashtable<Integer, Integer> CountStat = new Hashtable<>();
@@ -17,7 +17,7 @@ public class PetCluster {
     private int TotalCount;
     private int Threads;
 
-    public PetCluster(BedpeFile bedpefile, String outPrefix, int length, int threads) {
+    public PetCluster(BedPeFile bedpefile, String outPrefix, int length, int threads) {
         InFile = bedpefile;
         OutPrefix = outPrefix;
         Length = length;
@@ -42,7 +42,7 @@ public class PetCluster {
             System.exit(1);
         }
         CommandLine ComLine = new DefaultParser().parse(Argument, args);
-        InFile = new BedpeFile(ComLine.getOptionValue("f"));
+        InFile = new BedPeFile(ComLine.getOptionValue("f"));
         OutPrefix = ComLine.hasOption("p") ? ComLine.getOptionValue("p") : InFile.getPath();
         Length = ComLine.hasOption("l") ? Integer.parseInt(ComLine.getOptionValue("l")) : 0;
         Threads = ComLine.hasOption("t") ? Integer.parseInt(ComLine.getOptionValue("t")) : 1;

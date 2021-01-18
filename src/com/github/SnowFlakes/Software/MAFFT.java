@@ -1,14 +1,14 @@
 package com.github.SnowFlakes.Software;
 
-import com.github.SnowFlakes.File.AbstractFile;
-import com.github.SnowFlakes.File.FastaFile.FastaFile;
-import com.github.SnowFlakes.File.FastaFile.FastaItem;
-import com.github.SnowFlakes.System.CommandLine;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import com.github.SnowFlakes.File.FastaFile;
+
+import com.github.SnowFlakes.IO.HTSReader;
+import com.github.SnowFlakes.System.CommandLine;
+import htsjdk.samtools.reference.ReferenceSequence;
+
+
+import java.io.*;
 import java.util.ArrayList;
 
 /**
@@ -47,14 +47,13 @@ public class MAFFT extends AbstractSoftware {
         return Version;
     }
 
-    public FastaItem[] FindSimilarSequences(FastaFile file, AbstractFile<?> stat_file, float threshold)
-            throws IOException, InterruptedException {
-        FastaFile MsaFile = new FastaFile(file.getPath() + ".msa");
+    public ReferenceSequence[] FindSimilarSequences(FastaFile file, File stat_file, float threshold) throws IOException, InterruptedException {
+        FastaFile MsaFile = new FastaFile(file);
         StringBuilder SimSeq = new StringBuilder();
         ArrayList<char[]> MsaStat = new ArrayList<>();
         ArrayList<float[]> BaseFreq = new ArrayList<>();
         int[] CountArrays = new int[255];
-        FastaItem[] ResItems;
+        ReferenceSequence[] ResItems;
         // ----------------------------------------------------------------------
         String ComLine = FullExe() + " " + file.getPath();
         PrintWriter msa = new PrintWriter(MsaFile);
@@ -64,13 +63,13 @@ public class MAFFT extends AbstractSoftware {
             new CommandLine().run(ComLine, msa, new PrintWriter(System.err));
         }
         msa.close();
-        MsaFile.ReadOpen();
-        FastaItem item;
-        while ((item = MsaFile.ReadItem()) != null) {
-            MsaStat.add(item.Sequence.toString().toCharArray());
+        HTSReader<ReferenceSequence> reader = MsaFile.getReader();
+        ReferenceSequence item;
+        while ((item = reader.ReadRecord()) != null) {
+            MsaStat.add(item.getBaseString().toCharArray());
         }
         int SeqNum = MsaStat.size();
-        MsaFile.ReadClose();
+        reader.close();
         for (int i = 0; i < MsaStat.get(0).length; i++) {
             CountArrays['A'] = 0;
             CountArrays['T'] = 0;
@@ -83,7 +82,7 @@ public class MAFFT extends AbstractSoftware {
             int MaxValue = 0;
             char MaxBase = '-';
             BaseFreq.add(new float[255]);
-            for (char base : new char[] { 'A', 'T', 'C', 'G', '-' }) {
+            for (char base : new char[]{'A', 'T', 'C', 'G', '-'}) {
                 BaseFreq.get(i)[base] = (float) CountArrays[base] / SeqNum;
                 if (CountArrays[base] > MaxValue) {
                     MaxValue = CountArrays[base];
@@ -97,22 +96,21 @@ public class MAFFT extends AbstractSoftware {
             }
         }
         String[] SplitSeq = SimSeq.toString().replace("-", "").split("N+");
-        ResItems = new FastaItem[SplitSeq.length];
+        ResItems = new ReferenceSequence[SplitSeq.length];
         for (int i = 0; i < ResItems.length; i++) {
-            ResItems[i] = new FastaItem(">seq" + i);
-            ResItems[i].Sequence.append(SplitSeq[i]);
+            ResItems[i] = new ReferenceSequence(">seq" + i, i, SplitSeq[i].getBytes());
         }
         if (stat_file != null) {
-            BufferedWriter writer = stat_file.WriteOpen();
+            BufferedWriter writer = new BufferedWriter(new FileWriter(stat_file));
             writer.write("Position\tA\tT\tC\tG\t-\n");
             for (int i = 0; i < BaseFreq.size(); i++) {
                 writer.write(String.valueOf(i + 1));
-                for (char base : new char[] { 'A', 'T', 'C', 'G', '-' }) {
+                for (char base : new char[]{'A', 'T', 'C', 'G', '-'}) {
                     writer.write("\t" + String.format("%.2f", BaseFreq.get(i)[base]));
                 }
                 writer.write("\n");
             }
-            stat_file.WriteClose();
+            writer.close();
         }
         return ResItems;
     }

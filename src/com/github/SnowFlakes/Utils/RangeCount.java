@@ -2,7 +2,7 @@ package com.github.SnowFlakes.Utils;
 
 import java.io.IOException;
 
-import com.github.SnowFlakes.File.BedPeFile.BedpeFile;
+import com.github.SnowFlakes.File.BedPeFile.BedPeFile;
 import com.github.SnowFlakes.unit.Opts;
 import org.apache.commons.cli.*;
 
@@ -20,7 +20,7 @@ public class RangeCount {
             System.exit(0);
         }
         CommandLine ComLine = new DefaultParser().parse(Argument, args);
-        BedpeFile File = new BedpeFile(ComLine.getOptionValue("f"));
+        BedPeFile File = new BedPeFile(ComLine.getOptionValue("f"));
         int[] range = new int[2];
         try {
             range[0] = Integer.parseInt(ComLine.getOptionValue("r").split(":")[0]);

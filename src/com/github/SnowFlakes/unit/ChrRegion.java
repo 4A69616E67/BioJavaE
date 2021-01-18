@@ -1,12 +1,14 @@
 package com.github.SnowFlakes.unit;
 
+import htsjdk.tribble.annotation.Strand;
+
 /**
  * Created by snowf on 2019/2/17.
  */
 public class ChrRegion implements Comparable<ChrRegion> {
     public String Chr;
     public Region region;
-    public char Orientation = '+';
+    public Strand Orientation = Strand.decode('+');
 
     public ChrRegion(String[] s) {
         Chr = s[0];
@@ -18,7 +20,7 @@ public class ChrRegion implements Comparable<ChrRegion> {
         region = new Region(left, right);
     }
 
-    public ChrRegion(String s, int left, int right, char orientation) {
+    public ChrRegion(String s, int left, int right, Strand orientation) {
         this(s, left, right);
         Orientation = orientation;
     }

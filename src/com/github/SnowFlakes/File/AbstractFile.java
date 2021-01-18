@@ -1,21 +1,19 @@
 package com.github.SnowFlakes.File;
 
 import com.github.SnowFlakes.File.CommonFile.CommonFile;
+import com.github.SnowFlakes.IO.HTSReader;
+import com.github.SnowFlakes.IO.HTSWriter;
 
 import java.io.*;
 import java.util.*;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.ZipInputStream;
 
 /**
  * Created by snowf on 2019/2/17.
  */
-public abstract class AbstractFile<E extends AbstractItem> extends File {
+public abstract class AbstractFile<E> extends File {
     public long ItemNum = 0;
-    private boolean Sorted = false;
-    private int BufferSize = 1024 * 1024;// default 1M
-    protected BufferedReader reader;
-    protected BufferedWriter writer;
+    private boolean sorted = false;
+    private String description = getPath();
 
     public AbstractFile(String pathname) {
         super(pathname);
@@ -28,8 +26,8 @@ public abstract class AbstractFile<E extends AbstractItem> extends File {
     public AbstractFile(AbstractFile<?> file) {
         super(file.getPath());
         ItemNum = file.ItemNum;
-        reader = null;
-        writer = null;
+        sorted = file.sorted;
+        description = file.description;
     }
 
     public void CalculateItemNumber() throws IOException {
@@ -37,129 +35,50 @@ public abstract class AbstractFile<E extends AbstractItem> extends File {
         if (!isFile()) {
             return;
         }
-        ReadOpen();
-        while (ReadItemLine() != null) {
+        HTSReader<E> reader = getReader();
+        while (reader.ReadRecord() != null) {
             ItemNum++;
         }
-        ReadClose();
-    }
-
-    public void ReadOpen() throws IOException {
-        if (getName().matches(".*\\.gz")) {
-            reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(this))), BufferSize);
-        } else if (getName().matches(".*\\.zip")) {
-            reader = new BufferedReader(new InputStreamReader(new ZipInputStream(new FileInputStream(this))), BufferSize);
-        } else {
-            reader = new BufferedReader(new FileReader(this), BufferSize);
-        }
-    }
-
-    public void ReadClose() throws IOException {
         reader.close();
     }
 
-    public BufferedWriter WriteOpen() throws IOException {
-        return WriteOpen(false);
-    }
-
-    private BufferedWriter WriteOpen(boolean append) throws IOException {
-        writer = new BufferedWriter(new FileWriter(this, append), BufferSize);
-        return writer;
-    }
-
-    public void WriteClose() throws IOException {
-        writer.close();
-    }
-
-    public ArrayList<char[]> Read() throws IOException {
-        ReadOpen();
-        ItemNum = 0;
-        ArrayList<char[]> List = new ArrayList<>();
-        String[] Lines;
-        while ((Lines = ReadItemLine()) != null) {
-            char[] lines = String.join("\n", Lines).toCharArray();
-            List.add(lines);
-            ItemNum++;
-        }
-        ReadClose();
-        return List;
-    }
-
-    protected abstract E ExtractItem(String[] s);
-
     public ArrayList<E> Extraction(int num) throws IOException {
         ArrayList<E> list = new ArrayList<>();
-        ReadOpen();
+        HTSReader<E> reader = getReader();
         E item;
         int i = 0;
-        while ((item = ReadItem()) != null) {
-            i++;
-            if (i <= num) {
-                list.add(item);
-            } else {
-                break;
-            }
+        while ((item = reader.ReadRecord()) != null && ++i <= num) {
+            list.add(item);
         }
-        ReadClose();
+        reader.close();
         return list;
     }
 
-    public synchronized String[] ReadItemLine() throws IOException {
-        String line = reader.readLine();
-        if (line != null) {
-            return new String[]{line};
-        }
-        return null;
-    }
+    public abstract HTSReader<E> getReader();
 
-    public E ReadItem() throws IOException {
-        return ExtractItem(ReadItemLine());
-    }
+    public abstract HTSWriter<E> getWriter();
 
-    public abstract void WriteItem(E item) throws IOException;
+    public abstract HTSWriter<E> getWriter(boolean append);
 
-    public void WriteItemln(E item) throws IOException {
-        WriteItem(item);
-        writer.write("\n");
-    }
-
-    public BufferedReader getReader() {
-        return reader;
-    }
-
-    public BufferedWriter getWriter() {
-        return writer;
-    }
-
-    public synchronized void Append(AbstractFile<?> file) throws IOException {
-        System.out.println(new Date() + "\tAppend " + file.getName() + " to " + getName());
-        String[] item;
-        file.ReadOpen();
-        BufferedWriter writer = WriteOpen(true);
-        while ((item = file.ReadItemLine()) != null) {
-            writer.write(String.join("\n", item) + "\n");
+    public void Append(AbstractFile<E> file) throws IOException {
+        HTSWriter<E> writer = getWriter(true);
+        HTSReader<E> reader = file.getReader();
+        E item;
+        while ((item = reader.ReadRecord()) != null) {
+            writer.WriterRecordln(item);
             ItemNum++;
         }
-        file.ReadClose();
-        this.WriteClose();
-        System.out.println(new Date() + "\tEnd append " + file.getName() + " to " + getName());
+        reader.close();
+        writer.close();
     }
 
-    public synchronized void Append(ArrayList<?> List) throws IOException {
-        BufferedWriter writer = WriteOpen(true);
-        for (Object i : List) {
-            writer.write(i.toString());
-            writer.write("\n");
+    public void Append(ArrayList<E> List) throws IOException {
+        HTSWriter<E> writer = getWriter(true);
+        for (E item : List) {
+            writer.WriterRecordln(item);
             ItemNum++;
         }
-        WriteClose();
-    }
-
-    public synchronized void Append(String item) throws IOException {
-        BufferedWriter writer = WriteOpen(true);
-        writer.write(item);
-        WriteClose();
-        ItemNum++;
+        writer.close();
     }
 
     public void SortFile(AbstractFile<?> OutFile, Comparator<E> comparator) throws IOException {
@@ -181,7 +100,7 @@ public abstract class AbstractFile<E extends AbstractItem> extends File {
         }
         outfile.close();
         ReadClose();
-        Sorted = true;
+        sorted = true;
         System.out.println(new Date() + "\tEnd sort file: " + getName());
     }
 
@@ -324,18 +243,13 @@ public abstract class AbstractFile<E extends AbstractItem> extends File {
             try {
                 CalculateItemNumber();
             } catch (IOException e) {
-                System.err.println(
-                        "Warning! can't get accurate item number, current item number: " + getName() + " " + ItemNum);
+                System.err.println("Warning! can't get accurate item number, current item number: " + getName() + " " + ItemNum);
             }
         }
         return ItemNum;
     }
 
     public boolean isSorted() {
-        return Sorted;
-    }
-
-    public void setBufferSize(int bufferSize) {
-        BufferSize = bufferSize;
+        return sorted;
     }
 }

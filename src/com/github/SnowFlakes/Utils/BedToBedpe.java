@@ -2,7 +2,7 @@ package com.github.SnowFlakes.Utils;
 
 
 import com.github.SnowFlakes.File.BedFile.BedFile;
-import com.github.SnowFlakes.File.BedPeFile.BedpeFile;
+import com.github.SnowFlakes.File.BedPeFile.BedPeFile;
 import com.github.SnowFlakes.unit.Opts;
 
 import java.io.IOException;
@@ -18,8 +18,8 @@ public class BedToBedpe {
             System.err.println("usage: java -cp " + Opts.JarFile + " " + BedToBedpe.class.getName() + " <bed file 1> <bed file 2> <bedpe file>");
             System.exit(1);
         }
-        BedpeFile file = new BedpeFile(args[2]);
-        file.BedToBedpe(new BedFile(args[0]), new BedFile(args[1]));
+        BedPeFile file = new BedPeFile(args[2]);
+        file.BEDToBEDPE(new BedFile(args[0]), new BedFile(args[1]));
         System.out.println(file.getItemNum());
     }
 }

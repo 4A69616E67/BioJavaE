@@ -4,7 +4,7 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Hashtable;
 
-import com.github.SnowFlakes.File.BedPeFile.BedpeFile;
+import com.github.SnowFlakes.File.BedPeFile.BedPeFile;
 import com.github.SnowFlakes.unit.LinkerSequence;
 import org.apache.commons.math3.distribution.*;
 
@@ -193,7 +193,7 @@ public class Statistic {
         return ChrSize;
     }
 
-    public static ArrayList<long[]> PowerLaw(BedpeFile BedpeFile, int StepLength, File OutFile) throws IOException {
+    public static ArrayList<long[]> PowerLaw(BedPeFile BedpeFile, int StepLength, File OutFile) throws IOException {
         ArrayList<long[]> List = new ArrayList<>();
         List.add(new long[] { 0, StepLength, 0 });
         BufferedReader infile = new BufferedReader(new FileReader(BedpeFile));

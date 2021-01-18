@@ -1,6 +1,6 @@
 package com.github.SnowFlakes.Utils;
 
-import com.github.SnowFlakes.File.BedPeFile.BedpeFile;
+import com.github.SnowFlakes.File.BedPeFile.BedPeFile;
 import com.github.SnowFlakes.File.MatrixFile.MatrixFile;
 import com.github.SnowFlakes.tool.Statistic;
 import com.github.SnowFlakes.tool.Tools;
@@ -15,7 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
 public class CreateMatrix {
-    private BedpeFile BedpeFile;
+    private BedPeFile BedpeFile;
     private Chromosome[] Chromosomes;
     private ChrRegion Region1, Region2;
     private int Resolution = 100000;
@@ -28,7 +28,7 @@ public class CreateMatrix {
 
     private double MaxBinNum = 1e6;
 
-    public CreateMatrix(BedpeFile BedpeFile, Chromosome[] Chrs, int Resolution, String Prefix, int Threads) {
+    public CreateMatrix(BedPeFile BedpeFile, Chromosome[] Chrs, int Resolution, String Prefix, int Threads) {
         this.BedpeFile = BedpeFile;
         this.Chromosomes = Chrs;
         this.Resolution = Resolution;
@@ -38,6 +38,7 @@ public class CreateMatrix {
     }
 
     private CreateMatrix(String[] args) throws IOException {
+        BEDFeature
         Options Argument = new Options();
         Argument.addOption(
                 Option.builder("f").hasArg().argName("file").required().desc("[required] bedpefile").build());
@@ -76,7 +77,7 @@ public class CreateMatrix {
                     Argument, helpFooter, true);
             System.exit(1);
         }
-        BedpeFile = new BedpeFile(ComLine.getOptionValue("f"));
+        BedpeFile = new BedPeFile(ComLine.getOptionValue("f"));
         String[] Chr = ComLine.hasOption("chr") ? ComLine.getOptionValues("chr") : null;
         if (Chr != null) {
             Chromosomes = new Chromosome[Chr.length];
@@ -435,7 +436,7 @@ public class CreateMatrix {
         return BinSizeFile;
     }
 
-    private int[] IndexParse(BedpeFile file) throws IOException {
+    private int[] IndexParse(BedPeFile file) throws IOException {
         int[] Index = new int[6];
         switch (file.BedpeDetect()) {
             case BedpePointFormat:

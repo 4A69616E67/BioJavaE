@@ -1,6 +1,6 @@
 package com.github.SnowFlakes.Utils;
 
-import com.github.SnowFlakes.File.BedPeFile.BedpeFile;
+import com.github.SnowFlakes.File.BedPeFile.BedPeFile;
 import com.github.SnowFlakes.unit.Opts;
 import org.apache.commons.cli.*;
 
@@ -14,12 +14,12 @@ import com.github.SnowFlakes.tool.Tools;
 import com.github.SnowFlakes.unit.IntegerArrays;
 
 public class PowerLaw {
-    private BedpeFile BedpeFile;
+    private BedPeFile BedpeFile;
     private int StepLength;
     private String OutFile;
 
 
-    PowerLaw(BedpeFile bedpe, int length) {
+    PowerLaw(BedPeFile bedpe, int length) {
         BedpeFile = bedpe;
         StepLength = length;
     }
@@ -34,7 +34,7 @@ public class PowerLaw {
             System.exit(1);
         }
         CommandLine line = new DefaultParser().parse(Argument, args);
-        BedpeFile BedpeFile = new BedpeFile(line.getOptionValue("f"));
+        BedPeFile BedpeFile = new BedPeFile(line.getOptionValue("f"));
         int StepLength = Integer.parseInt(line.getOptionValue("l"));
         String OutFile = line.getOptionValue("o");
         if (OutFile == null) {

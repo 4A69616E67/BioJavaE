@@ -1,7 +1,7 @@
 package com.github.SnowFlakes.Utils;
 
 import com.github.SnowFlakes.File.CommonFile.CommonFile;
-import com.github.SnowFlakes.File.FastQFile.FastqFile;
+import com.github.SnowFlakes.File.FastqFile;
 import com.github.SnowFlakes.IO.FastqReaderExtension;
 import com.github.SnowFlakes.IO.FastqWriterExtension;
 import com.github.SnowFlakes.unit.Opts;
@@ -70,8 +70,8 @@ public class FastqExtract {
             FastqWriterExtension writer = new FastqWriterExtension(TempFile);
             FastqReaderExtension reader = new FastqReaderExtension(inputFile);
             int count = 1;
-            while ((item = reader.ReadRecode()) != null && count <= ItemNum) {
-                writer.WriterRecodeln(item);
+            while ((item = reader.ReadRecord()) != null && count <= ItemNum) {
+                writer.WriterRecordln(item);
                 count++;
             }
             writer.close();
@@ -82,7 +82,7 @@ public class FastqExtract {
         } else {
             FastqWriterExtension writer = new FastqWriterExtension(outputFile);
             for (FastqRecord i : TempFile.ExtractID(IDList, threads)) {
-                writer.WriterRecodeln(i);
+                writer.WriterRecordln(i);
             }
             writer.close();
             if (ItemNum > 0) {

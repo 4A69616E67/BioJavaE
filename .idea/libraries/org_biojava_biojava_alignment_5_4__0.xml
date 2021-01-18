@@ -1,0 +1,32 @@
+<component name="libraryTable">
+  <library name="org.biojava:biojava-alignment:5.4..0" type="repository">
+    <properties maven-id="org.biojava:biojava-alignment:5.4.0" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/biojava-alignment-5.4.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/biojava-core-5.4.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/forester-1.038.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-api-1.7.30.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/log4j-slf4j-impl-2.13.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/log4j-api-2.13.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/log4j-core-2.13.1.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/biojava-alignment-5.4.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/biojava-core-5.4.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/forester-1.038-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-api-1.7.30-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/log4j-slf4j-impl-2.13.1-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/log4j-api-2.13.1-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/log4j-core-2.13.1-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/biojava-alignment-5.4.0-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/biojava-core-5.4.0-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/forester-1.038-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/slf4j-api-1.7.30-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/log4j-slf4j-impl-2.13.1-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/log4j-api-2.13.1-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/log4j-core-2.13.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
