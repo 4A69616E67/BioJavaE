@@ -6,7 +6,7 @@ import htsjdk.samtools.util.IOUtil;
 
 import java.io.*;
 
-public class FastqWriterExtension<E extends FastqRecord> extends BasicFastqWriter implements HTSWriter<E> {
+public class FastqWriterExtension extends BasicFastqWriter implements HTSWriter<FastqRecord> {
     public FastqWriterExtension(File file) {
         this(file, false);
     }
@@ -21,12 +21,12 @@ public class FastqWriterExtension<E extends FastqRecord> extends BasicFastqWrite
 
 
     @Override
-    public synchronized void WriterRecord(E o) {
+    public synchronized void WriterRecord(FastqRecord o) {
         write(o);
     }
 
     @Override
-    public void WriterRecordln(E o) {
+    public void WriterRecordln(FastqRecord o) {
         WriterRecord(o);
     }
 

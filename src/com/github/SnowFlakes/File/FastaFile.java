@@ -30,6 +30,11 @@ public class FastaFile extends AbstractFile<ReferenceSequence> {
         super(file);
     }
 
+    public FastaFile(String pathname) {
+        super(pathname);
+    }
+
+
     public FastaReaderExtension getReader() {
         return new FastaReaderExtension(this);
     }

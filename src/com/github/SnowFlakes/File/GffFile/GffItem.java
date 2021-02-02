@@ -1,14 +1,12 @@
 package com.github.SnowFlakes.File.GffFile;
 
-import com.github.SnowFlakes.File.AbstractItem;
-
 import java.util.HashMap;
 
 /**
  * Created by snowf on 2019/5/5.
  */
 
-public class GffItem extends AbstractItem {
+public class GffItem {
     public String[] Columns = new String[8];
     public HashMap<String, String> map = new HashMap<>();
 

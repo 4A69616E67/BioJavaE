@@ -1,9 +1,10 @@
 package com.github.SnowFlakes.File;
 
-import com.github.SnowFlakes.File.FastQFile.FastqItem;
-import com.github.SnowFlakes.File.FastaFile.FastaItem;
+import com.github.SnowFlakes.IO.FastqReaderExtension;
 import com.github.SnowFlakes.Software.MAFFT;
 import com.github.SnowFlakes.unit.*;
+import htsjdk.samtools.fastq.FastqRecord;
+import htsjdk.samtools.reference.ReferenceSequence;
 
 import java.io.*;
 import java.util.*;
@@ -28,17 +29,17 @@ public class FileTool {
 
     public static Opts.FileFormat ReadsType(FastqFile fastqfile) throws IOException {
         int LineNumber = 100, i = 0, Count = 0;
-        fastqfile.ReadOpen();
+        FastqReaderExtension reader = fastqfile.getReader();
         // BufferedReader reader = new BufferedReader(new FileReader(fastqfile));
-        FastqItem item;
-        while ((item = fastqfile.ReadItem()) != null) {
-            Count += item.Sequence.length();
+        FastqRecord item;
+        while ((item = reader.ReadRecord()) != null) {
+            Count += item.getReadLength();
             i++;
             if (i >= LineNumber) {
                 break;
             }
         }
-        fastqfile.ReadClose();
+        reader.close();
         if (i == 0) {
             return Opts.FileFormat.ErrorFormat;
         }
@@ -103,30 +104,29 @@ public class FileTool {
         return matrix;
     }
 
-    public static String AdapterDetection(FastqFile file, File Prefix, int SubIndex, AbstractFile<?> stat_file)
-            throws IOException, InterruptedException {
-        StringBuilder Adapter = new StringBuilder();
+    public static String AdapterDetection(FastqFile file, File Prefix, int SubIndex, AbstractFile<?> stat_file) throws IOException, InterruptedException {
+        String Adapter = null;
         int SeqNum = 100;
         FastaFile HeadFile = new FastaFile(Prefix + ".head" + SeqNum);
-        file.ReadOpen();
+        FastqReaderExtension reader = file.getReader();
         BufferedWriter writer = new BufferedWriter(new FileWriter(HeadFile));
-        FastqItem fastq_item;
+        FastqRecord fastq_item;
         int linenumber = 0;
-        while ((fastq_item = file.ReadItem()) != null && ++linenumber <= SeqNum) {
-            writer.write(fastq_item.Title.replace("@", ">") + "\n");
-            writer.write(fastq_item.Sequence.substring(SubIndex) + "\n");
+        while ((fastq_item = reader.ReadRecord()) != null && ++linenumber <= SeqNum) {
+            writer.write(fastq_item.getReadName().replace("@", ">") + "\n");
+            writer.write(fastq_item.getReadString().substring(SubIndex) + "\n");
         }
-        file.ReadClose();
+        reader.close();
         writer.close();
-        FastaItem[] SplitAdapter = new MAFFT("mafft").FindSimilarSequences(HeadFile, stat_file, 0.5f);
+        ReferenceSequence[] SplitAdapter = new MAFFT("mafft").FindSimilarSequences(HeadFile, stat_file, 0.5f);
         int MaxValue = 0;
-        for (FastaItem aSplitAdapter : SplitAdapter) {
-            if (aSplitAdapter.Sequence.length() > MaxValue) {
-                MaxValue = aSplitAdapter.Sequence.length();
-                Adapter = aSplitAdapter.Sequence;
+        for (ReferenceSequence aSplitAdapter : SplitAdapter) {
+            if (aSplitAdapter.getBaseString().length() > MaxValue) {
+                MaxValue = aSplitAdapter.getBaseString().length();
+                Adapter = aSplitAdapter.getBaseString();
             }
         }
-        return Adapter.toString();
+        return Adapter;
     }
 
 }

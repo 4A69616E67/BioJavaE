@@ -6,6 +6,7 @@ import com.github.SnowFlakes.IO.HTSReader;
 import com.github.SnowFlakes.IO.HTSWriter;
 import com.github.SnowFlakes.unit.ChrRegion;
 import com.github.SnowFlakes.unit.Gene;
+import htsjdk.tribble.gff.Gff3BaseData;
 import htsjdk.tribble.gff.Gff3Feature;
 import htsjdk.tribble.gff.Gff3FeatureImpl;
 
@@ -16,23 +17,23 @@ import java.util.ArrayList;
  * Created by snowf on 2019/5/4.
  */
 
-public class GFF3File<E extends Gff3Feature> extends AbstractFile<E> {
+public class GFF3File extends AbstractFile<Gff3FeatureImpl> {
     public GFF3File(String pathname) {
         super(pathname);
     }
 
     @Override
-    public HTSReader<E> getReader() {
-        return new GFF3ReaderExtension<>(this);
+    public GFF3ReaderExtension getReader() {
+        return new GFF3ReaderExtension(this);
     }
 
     @Override
-    public HTSWriter<E> getWriter() {
+    public HTSWriter<Gff3FeatureImpl> getWriter() {
         return null;
     }
 
     @Override
-    public HTSWriter<E> getWriter(boolean append) {
+    public HTSWriter<Gff3FeatureImpl> getWriter(boolean append) {
         return null;
     }
 

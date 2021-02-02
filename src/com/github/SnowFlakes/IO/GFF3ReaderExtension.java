@@ -1,6 +1,5 @@
 package com.github.SnowFlakes.IO;
 
-import htsjdk.tribble.AbstractFeatureCodec;
 import htsjdk.tribble.AbstractFeatureReader;
 import htsjdk.tribble.gff.Gff3Codec;
 import htsjdk.tribble.gff.Gff3Feature;

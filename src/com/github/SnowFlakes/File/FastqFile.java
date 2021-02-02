@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * Created by snowf on 2019/2/17.
  */
-public class FastqFile<E extends FastqRecord> extends AbstractFile<E> {
+public class FastqFile extends AbstractFile<FastqRecord> {
     enum QualityFormat {
         PHRED33, PHRED64
     }
@@ -21,31 +21,31 @@ public class FastqFile<E extends FastqRecord> extends AbstractFile<E> {
     }
 
     @Override
-    public FastqReaderExtension<E> getReader() {
-        return new FastqReaderExtension<E>(this);
+    public FastqReaderExtension getReader() {
+        return new FastqReaderExtension(this);
     }
 
     @Override
-    public FastqWriterExtension<E> getWriter() {
+    public FastqWriterExtension getWriter() {
         return getWriter(false);
     }
 
     @Override
-    public FastqWriterExtension<E> getWriter(boolean append) {
-        return new FastqWriterExtension<>(this, append);
+    public FastqWriterExtension getWriter(boolean append) {
+        return new FastqWriterExtension(this, append);
     }
 
     public FastqFile(String s) {
         super(s);
     }
 
-    public FastqFile(FastqFile<E> file) {
+    public FastqFile(FastqFile file) {
         super(file.getPath());
     }
 
 
-    public static QualityFormat FastqPhred(FastqFile<?> file) {
-        FastqReaderExtension<?> reader = new FastqReaderExtension<>(file);
+    public static QualityFormat FastqPhred(FastqFile file) {
+        FastqReaderExtension reader = new FastqReaderExtension(file);
         FastqRecord Item;
         int[] FormatEdge = new int[]{(int) '9', (int) 'K'};
         int[] Count = new int[2];
@@ -63,17 +63,17 @@ public class FastqFile<E extends FastqRecord> extends AbstractFile<E> {
         return Count[0] >= Count[1] ? QualityFormat.PHRED33 : QualityFormat.PHRED64;
     }
 
-    public ArrayList<E> ExtractID(Collection<String> List) throws IOException {
+    public ArrayList<FastqRecord> ExtractID(Collection<String> List) throws IOException {
         return ExtractID(List, 1);
     }
 
-    public ArrayList<E> ExtractID(Collection<String> List, int threads) {
-        ArrayList<E> ResList = new ArrayList<>();
-        FastqReaderExtension<E> reader = new FastqReaderExtension<>(this);
+    public ArrayList<FastqRecord> ExtractID(Collection<String> List, int threads) {
+        ArrayList<FastqRecord> ResList = new ArrayList<>();
+        FastqReaderExtension reader = new FastqReaderExtension(this);
         Thread[] t = new Thread[threads];
         for (int i = 0; i < t.length; i++) {
             t[i] = new Thread(() -> {
-                E item;
+                FastqRecord item;
                 while ((item = reader.ReadRecord()) != null) {
                     if (List.contains(item.getReadName())) {
                         synchronized (this) {
@@ -93,13 +93,13 @@ public class FastqFile<E extends FastqRecord> extends AbstractFile<E> {
         return ResList;
     }
 
-    public void ExtractID(Collection<String> List, int threads, FastqFile<E> OutFile) {
-        FastqReaderExtension<E> reader = getReader();
-        FastqWriterExtension<E> writer = OutFile.getWriter();
+    public void ExtractID(Collection<String> List, int threads, FastqFile OutFile) {
+        FastqReaderExtension reader = getReader();
+        FastqWriterExtension writer = OutFile.getWriter();
         Thread[] t = new Thread[threads];
         for (int i = 0; i < t.length; i++) {
             t[i] = new Thread(() -> {
-                E item;
+                FastqRecord item;
                 while ((item = reader.ReadRecord()) != null) {
                     if (List.contains(item.getReadName())) {
                         synchronized (this) {
@@ -119,10 +119,10 @@ public class FastqFile<E extends FastqRecord> extends AbstractFile<E> {
         writer.close();
     }
 
-    public class HeardComparator implements Comparator<E> {
+    public class HeardComparator implements Comparator<FastqRecord> {
 
         @Override
-        public int compare(E o1, E o2) {
+        public int compare(FastqRecord o1, FastqRecord o2) {
             return o1.getReadName().compareTo(o2.getReadName());
         }
     }
