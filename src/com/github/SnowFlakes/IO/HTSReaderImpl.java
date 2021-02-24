@@ -17,6 +17,6 @@ public class HTSReaderImpl extends BufferedLineReader implements HTSReader<Strin
 
     @Override
     public String ReadRecord() {
-        return null;
+        return readLine();
     }
 }

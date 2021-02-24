@@ -81,133 +81,133 @@ public abstract class AbstractFile<E> extends File {
         writer.close();
     }
 
-    public void SortFile(AbstractFile<?> OutFile, Comparator<E> comparator) throws IOException {
-        System.out.println(new Date() + "\tSort file: " + getName());
-        BufferedWriter outfile = OutFile.WriteOpen();
-        ItemNum = 0;
-        ReadOpen();
-        E Item;
-        ArrayList<E> SortList = new ArrayList<>();
-        while ((Item = ReadItem()) != null) {
-            SortList.add(Item);
-            ItemNum++;
-        }
-        SortList.sort(comparator);
-        for (int i = 0; i < SortList.size(); i++) {
-            outfile.write(SortList.get(i).toString());
-            outfile.write("\n");
-            SortList.set(i, null);// 及时去除，减少内存占用
-        }
-        outfile.close();
-        ReadClose();
-        sorted = true;
-        System.out.println(new Date() + "\tEnd sort file: " + getName());
-    }
+//    public void SortFile(AbstractFile<?> OutFile, Comparator<E> comparator) throws IOException {
+//        System.out.println(new Date() + "\tSort file: " + getName());
+//        BufferedWriter outfile = OutFile.WriteOpen();
+//        ItemNum = 0;
+//        ReadOpen();
+//        E Item;
+//        ArrayList<E> SortList = new ArrayList<>();
+//        while ((Item = ReadItem()) != null) {
+//            SortList.add(Item);
+//            ItemNum++;
+//        }
+//        SortList.sort(comparator);
+//        for (int i = 0; i < SortList.size(); i++) {
+//            outfile.write(SortList.get(i).toString());
+//            outfile.write("\n");
+//            SortList.set(i, null);// 及时去除，减少内存占用
+//        }
+//        outfile.close();
+//        ReadClose();
+//        sorted = true;
+//        System.out.println(new Date() + "\tEnd sort file: " + getName());
+//    }
 
-    public synchronized void MergeSortFile(AbstractFile<E>[] InFile, Comparator<E> comparator) throws IOException {
-        ItemNum = 0;
-        System.out.print(new Date() + "\tMerge ");
-        for (File s : InFile) {
-            System.out.print(s.getName() + " ");
-        }
-        System.out.print("to " + getName() + "\n");
-        // =========================================================================================
-        LinkedList<E> SortList = new LinkedList<>();
-        BufferedWriter writer = WriteOpen();
-        if (InFile.length == 0) {
-            return;
-        }
-        for (int i = 0; i < InFile.length; i++) {
-            InFile[i].ReadOpen();
-            E item = InFile[i].ReadItem();
-            if (item != null) {
-                item.serial = i;
-                SortList.add(item);
-            } else {
-                InFile[i].ReadClose();
-            }
-        }
-        SortList.sort(comparator);
-        while (SortList.size() > 0) {
-            E item = SortList.remove(0);
-            int serial = item.serial;
-            writer.write(item.toString());
-            writer.write("\n");
-            ItemNum++;
-            item = InFile[serial].ReadItem();
-            if (item == null) {
-                continue;
-            }
-            item.serial = serial;
-            Iterator<E> iterator = SortList.iterator();
-            boolean flage = false;
-            int i = 0;
-            while (iterator.hasNext()) {
-                E item1 = iterator.next();
-                if (comparator.compare(item, item1) <= 0) {
-                    SortList.add(i, item);
-                    flage = true;
-                    break;
-                }
-                i++;
-            }
-            if (!flage) {
-                SortList.add(item);
-            }
-        }
-        WriteClose();
-        // ============================================================================================
-        System.out.print(new Date() + "\tEnd merge ");
-        for (File s : InFile) {
-            System.out.print(s.getName() + " ");
-        }
-        System.out.print("to " + getName() + "\n");
-    }
+//    public synchronized void MergeSortFile(AbstractFile<E>[] InFile, Comparator<E> comparator) throws IOException {
+//        ItemNum = 0;
+//        System.out.print(new Date() + "\tMerge ");
+//        for (File s : InFile) {
+//            System.out.print(s.getName() + " ");
+//        }
+//        System.out.print("to " + getName() + "\n");
+//        // =========================================================================================
+//        LinkedList<E> SortList = new LinkedList<>();
+//        BufferedWriter writer = WriteOpen();
+//        if (InFile.length == 0) {
+//            return;
+//        }
+//        for (int i = 0; i < InFile.length; i++) {
+//            InFile[i].ReadOpen();
+//            E item = InFile[i].ReadItem();
+//            if (item != null) {
+//                item.serial = i;
+//                SortList.add(item);
+//            } else {
+//                InFile[i].ReadClose();
+//            }
+//        }
+//        SortList.sort(comparator);
+//        while (SortList.size() > 0) {
+//            E item = SortList.remove(0);
+//            int serial = item.serial;
+//            writer.write(item.toString());
+//            writer.write("\n");
+//            ItemNum++;
+//            item = InFile[serial].ReadItem();
+//            if (item == null) {
+//                continue;
+//            }
+//            item.serial = serial;
+//            Iterator<E> iterator = SortList.iterator();
+//            boolean flage = false;
+//            int i = 0;
+//            while (iterator.hasNext()) {
+//                E item1 = iterator.next();
+//                if (comparator.compare(item, item1) <= 0) {
+//                    SortList.add(i, item);
+//                    flage = true;
+//                    break;
+//                }
+//                i++;
+//            }
+//            if (!flage) {
+//                SortList.add(item);
+//            }
+//        }
+//        WriteClose();
+//        // ============================================================================================
+//        System.out.print(new Date() + "\tEnd merge ");
+//        for (File s : InFile) {
+//            System.out.print(s.getName() + " ");
+//        }
+//        System.out.print("to " + getName() + "\n");
+//    }
 
-    public synchronized void Merge(AbstractFile<?>[] files) throws IOException {
-        BufferedWriter writer = WriteOpen();
-        ItemNum = 0;
-        String[] lines;
-        for (AbstractFile<?> x : files) {
-            System.out.println(new Date() + "\tMerge " + x.getName() + " to " + getName());
-            x.ReadOpen();
-            while ((lines = x.ReadItemLine()) != null) {
-                for (String line : lines) {
-                    writer.write(line);
-                    writer.write("\n");
-                }
-                ItemNum++;
-            }
-            x.ReadClose();
-        }
-        WriteClose();
-        System.out.println(new Date() + "\tDone merge");
-    }
+//    public synchronized void Merge(AbstractFile<?>[] files) throws IOException {
+//        BufferedWriter writer = WriteOpen();
+//        ItemNum = 0;
+//        String[] lines;
+//        for (AbstractFile<?> x : files) {
+//            System.out.println(new Date() + "\tMerge " + x.getName() + " to " + getName());
+//            x.ReadOpen();
+//            while ((lines = x.ReadItemLine()) != null) {
+//                for (String line : lines) {
+//                    writer.write(line);
+//                    writer.write("\n");
+//                }
+//                ItemNum++;
+//            }
+//            x.ReadClose();
+//        }
+//        WriteClose();
+//        System.out.println(new Date() + "\tDone merge");
+//    }
 
     public ArrayList<CommonFile> SplitFile(String Prefix, long itemNum) throws IOException {
         int filecount = 0;
         int count = 0;
         CommonFile TempFile;
-        String[] lines;
+        E item;
         ArrayList<CommonFile> Outfile = new ArrayList<>();
-        this.ReadOpen();
+        HTSReader<E> reader = getReader();
         Outfile.add(TempFile = new CommonFile(Prefix + ".Split" + filecount));
-        BufferedWriter outfile = TempFile.WriteOpen();
-        while ((lines = ReadItemLine()) != null) {
+        HTSWriter<String> outfile = TempFile.getWriter();
+        while ((item = reader.ReadRecord()) != null) {
             count++;
             if (count > itemNum) {
                 TempFile.ItemNum = itemNum;
                 outfile.close();
                 filecount++;
                 Outfile.add(TempFile = new CommonFile(Prefix + ".Split" + filecount));
-                outfile = TempFile.WriteOpen();
+                outfile = TempFile.getWriter();
                 count = 1;
             }
-            outfile.write(String.join("\n", lines) + "\n");
+            outfile.WriterRecordln(item.toString());
         }
         TempFile.ItemNum = count;
         outfile.close();
-        this.ReadClose();
+        reader.close();
         return Outfile;
     }
 

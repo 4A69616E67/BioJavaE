@@ -1,6 +1,5 @@
 package com.github.SnowFlakes.File.MatrixFile;
 
-import com.github.SnowFlakes.File.AbstractItem;
 import org.apache.commons.math3.exception.NotStrictlyPositiveException;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 
@@ -14,17 +13,18 @@ import com.github.SnowFlakes.unit.Region;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+
 import com.github.SnowFlakes.tool.Tools;
 
 /**
  * Created by 浩 on 2019/2/1.
  */
 
-public class MatrixItem extends AbstractItem {
-    public Array2DRowRealMatrix item;
+public class MatrixItem {
+    public Array2DRowRealMatrix dense_item;
+    public ArrayList<double[]> sparse_item;
     public ChrRegion Chr1 = new ChrRegion("C1", 0, 0);
     public ChrRegion Chr2 = new ChrRegion("C2", 0, 0);
     public int Resolution;
@@ -45,7 +45,7 @@ public class MatrixItem extends AbstractItem {
         Chr1 = action.getLeft();
         Chr2 = action.getRight();
         Resolution = resolution;
-        item = new Array2DRowRealMatrix(Chr1.region.getLength() / Resolution + 1,
+        dense_item = new Array2DRowRealMatrix(Chr1.region.getLength() / Resolution + 1,
                 Chr2.region.getLength() / Resolution + 1);
     }
 
@@ -56,11 +56,11 @@ public class MatrixItem extends AbstractItem {
     }
 
     public MatrixItem(int rowDimension, int columnDimension) throws NotStrictlyPositiveException {
-        item = new Array2DRowRealMatrix(rowDimension, columnDimension);
+        dense_item = new Array2DRowRealMatrix(rowDimension, columnDimension);
     }
 
     public MatrixItem(double[][] matrix) {
-        item = new Array2DRowRealMatrix(matrix);
+        dense_item = new Array2DRowRealMatrix(matrix);
     }
 
     public static class MatrixComparator implements Comparator<MatrixItem> {
@@ -72,12 +72,12 @@ public class MatrixItem extends AbstractItem {
     }
 
     public BufferedImage DrawMatrix(float threshold, boolean reverse) {
-        int MatrixHeight = item.getRowDimension();
-        int MatrixWidth = item.getColumnDimension();
+        int MatrixHeight = dense_item.getRowDimension();
+        int MatrixWidth = dense_item.getColumnDimension();
         ArrayList<Double> list = new ArrayList<>();
         for (int i = 0; i < MatrixHeight; i++) {
             for (int j = 0; j < MatrixWidth; j++) {
-                list.add(item.getEntry(i, j));
+                list.add(dense_item.getEntry(i, j));
             }
         }
         Collections.sort(list);
@@ -88,7 +88,7 @@ public class MatrixItem extends AbstractItem {
         BufferedImage matrix_image = new BufferedImage(MatrixWidth, MatrixHeight, BufferedImage.TYPE_INT_ARGB);
         for (int i = 0; i < MatrixHeight; i++) {
             for (int j = 0; j < MatrixWidth; j++) {
-                double value = item.getEntry(i, j);
+                double value = dense_item.getEntry(i, j);
                 Color c;
                 if (value >= MinValue && value <= MaxValue) {
                     value = Math.min(value, ThresholdValue);
@@ -112,8 +112,8 @@ public class MatrixItem extends AbstractItem {
     }
 
     public BufferedImage DrawHeatMap(ArrayList<ChrRegion> bin_size, int resolution, float thresholdValue) {
-        int High = item.getRowDimension();
-        int Width = item.getColumnDimension();
+        int High = dense_item.getRowDimension();
+        int Width = dense_item.getColumnDimension();
         int interval = 30;
         Label = false;
         BufferedImage image = DrawHeatMap(resolution, thresholdValue, true);
@@ -121,7 +121,7 @@ public class MatrixItem extends AbstractItem {
         int fold = getFold();
         int marginal = getMarginal();
         BasicStroke stroke = new BasicStroke(1, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND, 2,
-                new float[] { 10, 5 }, 0);
+                new float[]{10, 5}, 0);
         g.setStroke(stroke);
         Font t = new Font("Times New Roman", Font.PLAIN, 20);
         g.setFont(t);
@@ -143,9 +143,9 @@ public class MatrixItem extends AbstractItem {
     }
 
     public BufferedImage DrawHeatMap(String Chr1, int StartSite1, String Chr2, int StartSite2, int resolution,
-            float threshold, boolean reverse) {
-        int MatrixHeight = item.getRowDimension();
-        int MatrixWidth = item.getColumnDimension();
+                                     float threshold, boolean reverse) {
+        int MatrixHeight = dense_item.getRowDimension();
+        int MatrixWidth = dense_item.getColumnDimension();
         int StandardImageSize = 2000;
         int LegendWidth = 20;
         int interval = 200;
@@ -174,9 +174,9 @@ public class MatrixItem extends AbstractItem {
         if (Label) {
             t = new Font("Times New Roman", Font.PLAIN, 30);
             graphics.drawLine(Marginal, Marginal + MatrixHeight, Marginal + MatrixWidth, Marginal + MatrixHeight);// draw
-                                                                                                                  // x
-                                                                                                                  // label
-                                                                                                                  // line
+            // x
+            // label
+            // line
             graphics.drawLine(Marginal, Marginal + MatrixHeight, Marginal, Marginal);// draw y label line
             // draw sub x interval
             for (int i = 0; i <= MatrixWidth * 10 / interval; i++) {
@@ -277,7 +277,7 @@ public class MatrixItem extends AbstractItem {
                     Marginal + MatrixHeight / 2, -Math.PI / 2);// draw y title,rotation pi/2 anticlockwise
             Tools.DrawStringCenter(graphics, Chr2, t, Marginal + MatrixWidth / 2,
                     2 * Marginal + MatrixHeight - 5 - FontDesignMetrics.getMetrics(t).getHeight() / 2, 0);// draw x
-                                                                                                          // title
+            // title
         }
         return image;
     }
@@ -291,13 +291,13 @@ public class MatrixItem extends AbstractItem {
     }
 
     public boolean add(MatrixItem item) {
-        if (this.item.getRowDimension() != item.item.getRowDimension()
-                || this.item.getColumnDimension() != item.item.getColumnDimension()) {
+        if (this.dense_item.getRowDimension() != item.dense_item.getRowDimension()
+                || this.dense_item.getColumnDimension() != item.dense_item.getColumnDimension()) {
             return false;
         }
-        for (int i = 0; i < this.item.getRowDimension(); i++) {
-            for (int j = 0; j < this.item.getColumnDimension(); j++) {
-                this.item.addToEntry(i, j, item.item.getEntry(i, j));
+        for (int i = 0; i < this.dense_item.getRowDimension(); i++) {
+            for (int j = 0; j < this.dense_item.getColumnDimension(); j++) {
+                this.dense_item.addToEntry(i, j, item.dense_item.getEntry(i, j));
             }
         }
         return true;
@@ -321,9 +321,9 @@ public class MatrixItem extends AbstractItem {
     public boolean add(Region reg1, Region reg2, double value) {
         boolean flag = false;
         if (Chr1.region.IsContain(reg1.Center()) && Chr2.region.IsContain(reg2.Center())) {
-            int[] index = new int[] { (reg1.Center() - Chr1.region.Start) / Resolution,
-                    (reg2.Center() - Chr2.region.Start) / Resolution };
-            item.addToEntry(index[0], index[1], value);
+            int[] index = new int[]{(reg1.Center() - Chr1.region.Start) / Resolution,
+                    (reg2.Center() - Chr2.region.Start) / Resolution};
+            dense_item.addToEntry(index[0], index[1], value);
             flag = true;
         }
         return flag;
