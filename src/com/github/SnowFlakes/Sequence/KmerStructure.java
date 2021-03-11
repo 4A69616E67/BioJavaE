@@ -1,5 +1,7 @@
 package com.github.SnowFlakes.Sequence;
 
+import htsjdk.samtools.reference.ReferenceSequence;
+
 import java.util.ArrayList;
 
 /**
@@ -7,12 +9,12 @@ import java.util.ArrayList;
  */
 
 public class KmerStructure {
-    public DNASequence Seq;
+    public ReferenceSequence Seq;
     public ArrayList<KmerStructure> next = new ArrayList<>();
     public ArrayList<KmerStructure> last = new ArrayList<>();
     public boolean Visited = false;
 
-    public KmerStructure(DNASequence seq) {
+    public KmerStructure(ReferenceSequence seq) {
         Seq = seq;
     }
 }

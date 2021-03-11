@@ -1,11 +1,9 @@
 package com.github.SnowFlakes.System;
 
 import com.github.SnowFlakes.File.CommonFile.CommonFile;
+import htsjdk.samtools.util.IOUtil;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.ArrayList;
 
 /**
@@ -21,7 +19,7 @@ public class Qsub extends Pbs {
     }
 
     @Override
-    public void CreateSubmitFile(String command, CommonFile file) throws IOException {
+    public void CreateSubmitFile(String command, File file) throws IOException {
         StringBuilder Header = new StringBuilder();
         Header.append("#PBS -d ./\n");
         this.Nodes = this.Nodes == null ? "1" : this.Nodes;
@@ -37,7 +35,7 @@ public class Qsub extends Pbs {
         if (Queue != null) {
             Header.append("#PBS -q ").append(Queue).append("\n");
         }
-        BufferedWriter writer = file.WriteOpen();
+        BufferedWriter writer = IOUtil.openFileForBufferedWriting(file);
         writer.write(Header.toString() + "\n");
         writer.write(command + "\n");
         writer.close();

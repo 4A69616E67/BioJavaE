@@ -48,37 +48,6 @@ public class GFF3File extends AbstractFile<Gff3FeatureImpl> {
         System.out.println(list.size());
     }
 
-
-
-//    @Override
-//    public synchronized String[] ReadItemLine() throws IOException {
-//        ArrayList<String> list = new ArrayList<>();
-//        String line = reader.readLine();
-//        if (line == null) {
-//            return null;
-//        }
-//        String[] columns = line.split("\\t");
-//        while (line.matches("^#.*") || columns[2].compareToIgnoreCase("gene") != 0) {
-//            line = reader.readLine();
-//            columns = line.split("\\s+");
-//        }
-//        list.add(line);
-//        reader.mark(1000);
-//        while ((line = reader.readLine()) != null) {
-//            if (line.matches("^#.*")) {
-//                continue;
-//            }
-//            columns = line.split("\\t");
-//            if (columns[2].compareToIgnoreCase("gene") == 0) {
-//                reader.reset();
-//                break;
-//            }
-//            list.add(line);
-//            reader.mark(1000);
-//        }
-//        return list.size() > 0 ? list.toArray(new String[0]) : null;
-//    }
-
     /**
      * @apiNote list must been sorted.
      */
@@ -103,9 +72,7 @@ public class GFF3File extends AbstractFile<Gff3FeatureImpl> {
                 }
             }
         }
-        if (i >= j) {
-            p = i;
-        }
+        p = i;
         int MinLen = Integer.MAX_VALUE, MinIndex = p;
         for (int k = p - 1; k <= p + 1; k++) {
             if (k >= 0 && k < list.size()) {

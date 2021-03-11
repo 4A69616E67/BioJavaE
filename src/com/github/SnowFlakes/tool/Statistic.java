@@ -5,12 +5,13 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 
 import com.github.SnowFlakes.File.BedPeFile.BedPeFile;
+import com.github.SnowFlakes.IO.HTSReader;
+import com.github.SnowFlakes.unit.BEDPEItem;
 import com.github.SnowFlakes.unit.LinkerSequence;
 import org.apache.commons.math3.distribution.*;
 
 /**
  * Created by snowf on 2019/2/17.
- *
  */
 public class Statistic {
 
@@ -193,30 +194,30 @@ public class Statistic {
         return ChrSize;
     }
 
-    public static ArrayList<long[]> PowerLaw(BedPeFile BedpeFile, int StepLength, File OutFile) throws IOException {
+    public static ArrayList<long[]> PowerLaw(BedPeFile bedPeFile, int StepLength, File OutFile) throws IOException {
         ArrayList<long[]> List = new ArrayList<>();
-        List.add(new long[] { 0, StepLength, 0 });
-        BufferedReader infile = new BufferedReader(new FileReader(BedpeFile));
-        String line;
+        List.add(new long[]{0, StepLength, 0});
+//        BufferedReader infile = new BufferedReader(new FileReader(bedPeFile));
+        HTSReader<BEDPEItem> reader = bedPeFile.getReader();
+        BEDPEItem item;
         String[] str;
         int distant;
-        byte[] index;
-        switch (BedpeFile.BedpeDetect()) {
-            case BedpePointFormat:
-                index = new byte[] { 1, 1, 3, 3 };
-                break;
-            case BedpeRegionFormat:
-                index = new byte[] { 5, 4, 2, 1 };
-                break;
-            default:
-                System.err.println("Error format!");
-                infile.close();
-                return List;
-        }
-        while ((line = infile.readLine()) != null) {
-            str = line.split("\\s+");
-            distant = Math.abs(Integer.parseInt(str[index[0]]) + Integer.parseInt(str[index[1]])
-                    - Integer.parseInt(str[index[2]]) - Integer.parseInt(str[index[3]])) / 2;
+//        byte[] index;
+//        switch () {
+//            case BedpePointFormat:
+//                index = new byte[] { 1, 1, 3, 3 };
+//                break;
+//            case BedpeRegionFormat:
+//                index = new byte[] { 5, 4, 2, 1 };
+//                break;
+//            default:
+//                System.err.println("Error format!");
+//                infile.close();
+//                return List;
+//        }
+        while ((item = reader.ReadRecord()) != null) {
+//            str = line.split("\\s+");
+            distant = Math.abs((item.getLocate2().getEnd() + item.getLocate2().getStart() - item.getLocate1().getEnd() - item.getLocate1().getStart()) / 2);
             int i = 0;
             while (i < List.size()) {
                 if (distant > List.get(i)[1]) {
@@ -227,15 +228,15 @@ public class Statistic {
                 }
             }
             if (i == List.size()) {
-                List.add(new long[] { List.get(i - 1)[1] + 1, List.get(i - 1)[1] + StepLength, 0 });
+                List.add(new long[]{List.get(i - 1)[1] + 1, List.get(i - 1)[1] + StepLength, 0});
                 while (List.get(i)[1] < distant) {
                     i++;
-                    List.add(new long[] { List.get(i - 1)[1] + 1, List.get(i - 1)[1] + StepLength, 0 });
+                    List.add(new long[]{List.get(i - 1)[1] + 1, List.get(i - 1)[1] + StepLength, 0});
                 }
                 List.get(i)[2]++;
             }
         }
-        infile.close();
+        reader.close();
         if (OutFile != null) {
             BufferedWriter writer = new BufferedWriter(new FileWriter(OutFile));
             writer.write("Distant/(M)\tCount/(log10)\n");

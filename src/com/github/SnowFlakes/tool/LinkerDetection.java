@@ -1,13 +1,15 @@
 package com.github.SnowFlakes.tool;
 
 import com.github.SnowFlakes.File.FastqFile;
-import com.github.SnowFlakes.File.FastQFile.FastqItem;
 import com.github.SnowFlakes.FragmentDigested.RestrictionEnzyme;
-import com.github.SnowFlakes.Sequence.DNASequence;
 import com.github.SnowFlakes.Sequence.KmerStructure;
 import com.github.SnowFlakes.Statistic.StatUtil;
 import com.github.SnowFlakes.unit.*;
+import htsjdk.samtools.fastq.FastqRecord;
+import htsjdk.samtools.reference.ReferenceSequence;
 import org.apache.commons.cli.*;
+import org.biojava.nbio.core.sequence.DNASequence;
+import org.biojava.nbio.core.util.SequenceTools;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -53,21 +55,18 @@ public class LinkerDetection {
         RestrictionEnzyme enzyme = Parameter.GetStringOpt(ComLine, "e", null) == null ? null
                 : new RestrictionEnzyme(Parameter.GetStringOpt(ComLine, "e", null));
         // --------------------------------------------------------------------------------------------------------------
-        ArrayList<DNASequence> result = run(InPutFile, new File(Prefix), Index1, Index2, SeqNum, enzyme, KmerLen,
-                Threshold);
-        for (DNASequence d : result) {
-            System.out.println(d);
+        ArrayList<ReferenceSequence> result = run(InPutFile, new File(Prefix), Index1, Index2, SeqNum, enzyme, KmerLen, Threshold);
+        for (ReferenceSequence d : result) {
+            System.out.println(d.getBaseString() + "\t" + d.getContigIndex());
         }
     }
 
-    public static ArrayList<DNASequence> run(FastqFile InPutFile, File prefix, int start, int end, int seqNum,
-            RestrictionEnzyme enzyme, int k_merLen, float threshold) throws IOException {
-        ArrayList<DNASequence> linkers = LinkerDetection.SimilarSeqDetection(InPutFile, new File("test"), start, end,
-                seqNum, k_merLen, threshold);
+    public static ArrayList<ReferenceSequence> run(FastqFile InPutFile, File prefix, int start, int end, int seqNum, RestrictionEnzyme enzyme, int k_merLen, float threshold) throws IOException {
+        ArrayList<ReferenceSequence> linkers = LinkerDetection.SimilarSeqDetection(InPutFile, new File("test"), start, end, seqNum, k_merLen, threshold);
         if (enzyme == null) {
             // find out restriction enzyme
             int[] Count = new int[RestrictionEnzyme.list.length];
-            for (int i = 0; i < linkers.size(); i++) {
+            for (ReferenceSequence linker : linkers) {
                 int minPosition = 1000;
                 int minIndex = 0;
                 boolean flag = false;
@@ -75,7 +74,7 @@ public class LinkerDetection {
                     String subEnzyme1 = RestrictionEnzyme.list[j].getSequence().substring(0, Math.max(
                             RestrictionEnzyme.list[j].getCutSite(),
                             RestrictionEnzyme.list[j].getSequence().length() - RestrictionEnzyme.list[j].getCutSite()));
-                    int position = linkers.get(i).getSeq().indexOf(subEnzyme1);
+                    int position = linker.getBaseString().indexOf(subEnzyme1);
                     if (position >= 0 && position <= 3 && position < minPosition) {
                         minPosition = position;
                         minIndex = j;
@@ -102,19 +101,14 @@ public class LinkerDetection {
         // 修剪
         if (enzyme != null) {
             for (int i = 0; i < linkers.size(); i++) {
-                String subEnzyme1 = enzyme.getSequence().substring(0,
-                        Math.max(enzyme.getCutSite(), enzyme.getSequence().length() - enzyme.getCutSite()));
-                String subEnzyme2 = enzyme.getSequence()
-                        .substring(Math.min(enzyme.getCutSite(), enzyme.getSequence().length() - enzyme.getCutSite()));
+                String subEnzyme1 = enzyme.getSequence().substring(0, Math.max(enzyme.getCutSite(), enzyme.getSequence().length() - enzyme.getCutSite()));
+                String subEnzyme2 = enzyme.getSequence().substring(Math.min(enzyme.getCutSite(), enzyme.getSequence().length() - enzyme.getCutSite()));
                 int index1, index2;
-                index1 = linkers.get(i).getSeq().indexOf(subEnzyme1);
-                index2 = linkers.get(i).getSeq().lastIndexOf(subEnzyme2);
-                if (index1 >= 0 && index2 >= 0 && index1 + subEnzyme1.length() < index2 && index1 <= 3
-                        && linkers.get(i).getSeq().length() - index2 - subEnzyme2.length() <= 3) {
-                    DNASequence s = new DNASequence(
-                            linkers.get(i).getSeq().substring(index1 + subEnzyme1.length(), index2), '+',
-                            linkers.get(i).Value);
-                    if (s.get_reverse_complement().equals(s.getSeq())) {
+                index1 = linkers.get(i).getBaseString().indexOf(subEnzyme1);
+                index2 = linkers.get(i).getBaseString().lastIndexOf(subEnzyme2);
+                if (index1 >= 0 && index2 >= 0 && index1 + subEnzyme1.length() < index2 && index1 <= 3 && linkers.get(i).length() - index2 - subEnzyme2.length() <= 3) {
+                    ReferenceSequence s = new ReferenceSequence("", linkers.get(i).getContigIndex(), linkers.get(i).getBaseString().substring(index1 + subEnzyme1.length(), index2).getBytes());
+                    if (Tools.ReverseComple(s.getBaseString()).equals(s.getBaseString())) {
                         linkers.set(i, s);
                     } else {
                         linkers.remove(i);
@@ -128,58 +122,54 @@ public class LinkerDetection {
         }
         // 去重
         Hashtable<String, Double> final_linkers = new Hashtable<>();
-        for (DNASequence d : linkers) {
-            if (!final_linkers.contains(d.getSeq())) {
-                final_linkers.put(d.getSeq(), d.Value);
+        for (ReferenceSequence d : linkers) {
+            if (!final_linkers.contains(d.getBaseString())) {
+                final_linkers.put(d.getBaseString(), (double) d.getContigIndex());
             } else {
-                final_linkers.put(d.getSeq(), final_linkers.get(d.getSeq()) + d.Value);
+                final_linkers.put(d.getBaseString(), final_linkers.get(d.getBaseString()) + d.getContigIndex());
             }
         }
         linkers.clear();
         for (String s : final_linkers.keySet()) {
-            linkers.add(new DNASequence(s, '+', final_linkers.get(s)));
+            linkers.add(new ReferenceSequence("", final_linkers.get(s).intValue(), s.getBytes()));
         }
         return linkers;
     }
 
-    public static ArrayList<DNASequence> SimilarSeqDetection(FastqFile input_file, File prefix, int start, int end,
-            int SeqNum, int k_merLen, float threshold) throws IOException {
-        start = start < 0 ? 0 : start;
-        end = end < start ? start : end;
+    public static ArrayList<ReferenceSequence> SimilarSeqDetection(FastqFile input_file, File prefix, int start, int end,
+                                                                   int SeqNum, int k_merLen, float threshold) throws IOException {
+        start = Math.max(start, 0);
+        end = Math.max(end, start);
         SeqNum = SeqNum == 0 ? 5000 : SeqNum;
         k_merLen = k_merLen == 0 ? 10 : k_merLen;
         threshold = threshold == 0 ? 0.05f : threshold;
-        ArrayList<FastqItem> list = input_file.Extraction(SeqNum);
-        for (FastqItem item : list) {
-            item.Sequence = item.Sequence.substring(start, Math.min(end, item.Sequence.length()));
+        ArrayList<FastqRecord> list = input_file.Extraction(SeqNum);
+        for (FastqRecord item : list) {
+            item = new FastqRecord(item.getReadName(), item.getReadString().substring(start, Math.min(end, item.getReadString().length())), item.getBaseQualityHeader(), item.getBaseQualityString().substring(start, Math.min(end, item.getReadString().length())));
         }
         ArrayList<KmerStructure> ValidKmerList = GetValidKmer(list, k_merLen, threshold * SeqNum);
         ArrayList<KmerStructure> assembly_list = Assembly(ValidKmerList);
-        ArrayList<DNASequence> final_assembly_list = AssemblyShow(assembly_list);
+        ArrayList<ReferenceSequence> final_assembly_list = AssemblyShow(assembly_list);
         return final_assembly_list;
     }
 
-    private static ArrayList<DNASequence> AssemblyShow(ArrayList<KmerStructure> input) {
-        ArrayList<DNASequence> result = new ArrayList<>();
+    private static ArrayList<ReferenceSequence> AssemblyShow(ArrayList<KmerStructure> input) {
+        ArrayList<ReferenceSequence> result = new ArrayList<>();
         if (input == null || input.size() == 0) {
-            result.add(new DNASequence(""));
+            result.add(new ReferenceSequence("", 0, new byte[0]));
         } else {
             for (int i = 0; i < input.size(); i++) {
                 if (input.get(i).Visited) {
-                    result.add(new DNASequence(""));
+                    result.add(new ReferenceSequence("", i, new byte[0]));
                     continue;
                 }
                 input.get(i).Visited = true;
-                ArrayList<DNASequence> next_seq = AssemblyShow(input.get(i).next);
-                for (int j = 0; j < next_seq.size(); j++) {
-                    DNASequence s = next_seq.get(j);
-                    if (s.getSeq().length() == 0) {
-                        result.add(new DNASequence(input.get(i).Seq.getSeq(), '+', input.get(i).Seq.Value));
+                ArrayList<ReferenceSequence> next_seq = AssemblyShow(input.get(i).next);
+                for (ReferenceSequence s : next_seq) {
+                    if (s.length() == 0) {
+                        result.add(input.get(i).Seq);
                     } else {
-                        result.add(new DNASequence(
-                                input.get(i).Seq.getSeq()
-                                        + s.getSeq().substring(input.get(i).Seq.getSeq().length() - 1),
-                                '+', Math.min(input.get(i).Seq.Value, s.Value)));
+                        result.add(new ReferenceSequence("", Math.min(input.get(i).Seq.getContigIndex(), s.getContigIndex()), new String(input.get(i).Seq.getBaseString() + s.getBaseString().substring(input.get(i).Seq.getBaseString().length() - 1)).getBytes()));
                     }
                 }
                 input.get(i).Visited = false;
@@ -192,9 +182,9 @@ public class LinkerDetection {
         ArrayList<KmerStructure> temp_list = new ArrayList<>(origin);
         ArrayList<KmerStructure> assembly_list = new ArrayList<>();
         ArrayList<String[]> subList = new ArrayList<>();
-        for (int i = 0; i < temp_list.size(); i++) {
-            String s = temp_list.get(i).Seq.getSeq();
-            subList.add(new String[] { s.substring(0, s.length() - 1), s.substring(1) });
+        for (KmerStructure kmerStructure : temp_list) {
+            String s = kmerStructure.Seq.getBaseString();
+            subList.add(new String[]{s.substring(0, s.length() - 1), s.substring(1)});
         }
         for (int i = 0; i < temp_list.size(); i++) {
             String[] sub1 = subList.get(i);
@@ -217,30 +207,40 @@ public class LinkerDetection {
         return assembly_list;
     }
 
-    private static ArrayList<KmerStructure> GetValidKmer(ArrayList<FastqItem> list, int k, float threshold) {
+    private static ArrayList<KmerStructure> GetValidKmer(ArrayList<FastqRecord> list, int k, float threshold) {
         HashMap<String, int[]> KmerMap = new HashMap<>();
-        HashMap<String, int[]> CleanMap = new HashMap<>();
-        for (FastqItem item : list) {
-            String[] kmer = Tools.GetKmer(item.Sequence, k);
+        for (FastqRecord item : list) {
+            String[] kmer = Tools.GetKmer(item.getReadString(), k);
             for (String s : kmer) {
                 if (!KmerMap.containsKey(s)) {
-                    KmerMap.put(s, new int[] { 0 });
+                    KmerMap.put(s, new int[]{0});
                 }
                 KmerMap.get(s)[0]++;
             }
         }
+        int i = 0;
+        ArrayList<KmerStructure> result = new ArrayList<>();
         for (String s : KmerMap.keySet()) {
             if (KmerMap.get(s)[0] > threshold) {
-                CleanMap.put(s, KmerMap.get(s));
+                result.add(new KmerStructure(new ReferenceSequence("Seq" + i, KmerMap.get(s)[0], s.getBytes())));
+                i++;
             }
         }
         KmerMap.clear();
-        ArrayList<KmerStructure> result = new ArrayList<>();
-        int i = 0;
-        for (String s : CleanMap.keySet()) {
-            i++;
-            result.add(new KmerStructure(new DNASequence(s, '+', CleanMap.get(s)[0])));
-        }
         return result;
+    }
+}
+
+class DNASeq extends ReferenceSequence {
+
+    /**
+     * creates a fully formed ReferenceSequence
+     *
+     * @param name  the name of the sequence from the source file
+     * @param index the zero based index of this contig in the source file
+     * @param bases the bases themselves stored as one-byte characters
+     */
+    public DNASeq(String name, int index, byte[] bases) {
+        super(name, index, bases);
     }
 }

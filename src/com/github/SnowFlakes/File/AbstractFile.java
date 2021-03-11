@@ -164,25 +164,22 @@ public abstract class AbstractFile<E> extends File {
 //        System.out.print("to " + getName() + "\n");
 //    }
 
-//    public synchronized void Merge(AbstractFile<?>[] files) throws IOException {
-//        BufferedWriter writer = WriteOpen();
-//        ItemNum = 0;
-//        String[] lines;
-//        for (AbstractFile<?> x : files) {
-//            System.out.println(new Date() + "\tMerge " + x.getName() + " to " + getName());
-//            x.ReadOpen();
-//            while ((lines = x.ReadItemLine()) != null) {
-//                for (String line : lines) {
-//                    writer.write(line);
-//                    writer.write("\n");
-//                }
-//                ItemNum++;
-//            }
-//            x.ReadClose();
-//        }
-//        WriteClose();
-//        System.out.println(new Date() + "\tDone merge");
-//    }
+    public synchronized void Merge(AbstractFile<E>[] files) throws IOException {
+        HTSWriter<E> writer = getWriter();
+        ItemNum = 0;
+        E lines;
+        for (AbstractFile<E> x : files) {
+            System.out.println(new Date() + "\tMerge " + x.getName() + " to " + getName());
+            HTSReader<E>  reader = x.getReader();
+            while ((lines = reader.ReadRecord()) != null) {
+                writer.WriterRecordln(lines);
+                ItemNum++;
+            }
+            reader.close();
+        }
+        writer.close();
+        System.out.println(new Date() + "\tDone merge");
+    }
 
     public ArrayList<CommonFile> SplitFile(String Prefix, long itemNum) throws IOException {
         int filecount = 0;

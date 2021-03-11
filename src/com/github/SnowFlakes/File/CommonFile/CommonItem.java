@@ -1,6 +1,5 @@
 package com.github.SnowFlakes.File.CommonFile;
 
-import com.github.SnowFlakes.File.AbstractItem;
 
 import java.util.Comparator;
 
@@ -8,7 +7,7 @@ import java.util.Comparator;
  * Created by snowf on 2019/8/28.
  */
 
-public class CommonItem extends AbstractItem {
+public class CommonItem {
     public String item;
 
     public CommonItem(String s) {

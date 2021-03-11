@@ -2,6 +2,8 @@ package com.github.SnowFlakes.System;
 
 import com.github.SnowFlakes.File.CommonFile.CommonFile;
 
+import java.io.File;
+
 /**
  * Created by snowf on 2019/6/15.
  */
@@ -21,7 +23,7 @@ public abstract class Pbs {
         JobName = jobname;
     }
 
-    public abstract void CreateSubmitFile(String command, CommonFile file) throws Exception;
+    public abstract void CreateSubmitFile(String command, File file) throws Exception;
 
     public abstract String run(CommonFile file) throws Exception;
 }

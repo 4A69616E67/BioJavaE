@@ -38,7 +38,6 @@ public class CreateMatrix {
     }
 
     private CreateMatrix(String[] args) throws IOException {
-        BEDFeature
         Options Argument = new Options();
         Argument.addOption(
                 Option.builder("f").hasArg().argName("file").required().desc("[required] bedpefile").build());

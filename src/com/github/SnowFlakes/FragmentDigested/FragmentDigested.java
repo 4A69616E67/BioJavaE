@@ -4,11 +4,19 @@ import com.github.SnowFlakes.File.BedFile.BedFile;
 import com.github.SnowFlakes.File.BedFile.BedItem;
 import com.github.SnowFlakes.File.CommonFile.CommonFile;
 import com.github.SnowFlakes.File.FastaFile;
-import com.github.SnowFlakes.File.FastaFile.FastaItem;
+import com.github.SnowFlakes.IO.BedWriterExtension;
+import com.github.SnowFlakes.IO.FastaReaderExtension;
+import com.github.SnowFlakes.IO.FastqReaderExtension;
+import com.github.SnowFlakes.IO.HTSWriter;
 import com.github.SnowFlakes.tool.Tools;
 import com.github.SnowFlakes.unit.ChrRegion;
 import com.github.SnowFlakes.unit.Chromosome;
 import com.github.SnowFlakes.unit.ThreadIndex;
+import htsjdk.samtools.reference.ReferenceSequence;
+import org.apache.commons.compress.utils.ByteUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -43,18 +51,18 @@ public class FragmentDigested {
         if (!OutDir.isDirectory() && !OutDir.mkdir()) {
             System.err.println(new Date() + "\tCreate " + OutDir + " false !");
         }
-        ArrayList<FastaItem> GenomeList = new ArrayList<>();
+        ArrayList<ReferenceSequence> GenomeList = new ArrayList<>();
         //--------------------------------------------------
-        genomeFile.ReadOpen();
-        FastaItem item;
-        while ((item = genomeFile.ReadItem()) != null) {
-            int chrIndex = ContainChromosome(item.Title);
+        FastaReaderExtension reader = genomeFile.getReader();
+        ReferenceSequence item;
+        while ((item = reader.ReadRecord()) != null) {
+            int chrIndex = ContainChromosome(item.getName());
             if (chrIndex != -1) {
                 GenomeList.add(item);
-                Chrs[chrIndex].Size = item.Sequence.length();
+                Chrs[chrIndex].Size = item.length();
             }
         }
-        genomeFile.ReadClose();
+        reader.close();
         //------------------------------------------------
         Thread[] t = new Thread[Threads];
         ThreadIndex Index = new ThreadIndex(-1);
@@ -65,18 +73,14 @@ public class FragmentDigested {
                     if (index >= GenomeList.size()) {
                         break;
                     }
-                    int chrIndex = ContainChromosome(GenomeList.get(index).Title);
+                    int chrIndex = ContainChromosome(GenomeList.get(index).getName());
                     if (chrIndex != -1) {
                         ArrayList<BedItem> FragmentList = FindFragment(GenomeList.get(index), Enzyme);
-                        try {
-                            ChrsFragmentFile[chrIndex].WriteOpen();
-                            for (BedItem frag : FragmentList) {
-                                ChrsFragmentFile[chrIndex].WriteItemln(frag);
-                            }
-                            ChrsFragmentFile[chrIndex].WriteClose();
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                        BedWriterExtension writer = ChrsFragmentFile[chrIndex].getWriter();
+                        for (BedItem frag : FragmentList) {
+                            writer.WriterRecordln(frag);
                         }
+                        writer.close();
                     }
                 }
             });
@@ -84,16 +88,15 @@ public class FragmentDigested {
         }
         Tools.ThreadsWait(t);
         //--------------------------------------------------
-        BufferedWriter writer = ChrSizeFile.WriteOpen();
+        HTSWriter<String> writer = ChrSizeFile.getWriter();
         for (int i = 0; i < ChrsFragmentFile.length; i++) {
             if (!ChrsFragmentFile[i].exists()) {
                 System.err.println(new Date() + "\t[FindRestrictionFragment]\tWarning! No " + Chrs[i].Name + " in genomic file");
-                ChrsFragmentFile[i].WriteOpen();
-                ChrsFragmentFile[i].WriteClose();
+                ChrsFragmentFile[i].createNewFile();
             }
-            writer.write(Chrs[i].Name + "\t" + Chrs[i].Size + "\n");
+            writer.WriterRecord(Chrs[i].Name + "\t" + Chrs[i].Size + "\n");
         }
-        ChrSizeFile.WriteClose();
+        writer.close();
         AllChrsFragmentFile.Merge(ChrsFragmentFile);
         System.out.println(new Date() + "\tCreate restriction fragment finished");
         //-------------------
@@ -135,30 +138,37 @@ public class FragmentDigested {
         return -1;
     }
 
-    private ArrayList<BedItem> FindFragment(FastaItem refSeq, RestrictionEnzyme enzymeSeq) {
+    private ArrayList<BedItem> FindFragment(ReferenceSequence refSeq, RestrictionEnzyme enzymeSeq) {
         String EnzySeq = enzymeSeq.getSequence();
         if (EnzySeq.length() < 1) {
             System.err.println("Null enzyme sequence!");
             System.exit(1);
         }
-        Chromosome Chr = new Chromosome(refSeq.Title, refSeq.Sequence.length());
+        Chromosome Chr = new Chromosome(refSeq.getName(), refSeq.length());
         ArrayList<BedItem> List = new ArrayList<>();
         int Count = 1;
-        List.add(new BedItem("fragment" + Count, new ChrRegion(Chr.Name, 1, 0), Count, new String[0]));
+        BedItem item = new BedItem(Chr.Name, 1,0);
+        item.setScore(Count);
+        item.setDescription("fragment" + Count);
+        List.add(item);
+        String seq = refSeq.getBaseString();
         for (int i = 0; i < Chr.Size - EnzySeq.length() + 1; i++) {
-            if (refSeq.Sequence.substring(i, i + EnzySeq.length()).compareToIgnoreCase(EnzySeq) == 0) {
+            if (seq.substring(i, i + EnzySeq.length()).compareToIgnoreCase(EnzySeq) == 0) {
                 int EndIndex = i + enzymeSeq.getCutSite();
                 if (EndIndex != 0) {
-                    List.get(List.size() - 1).getLocation().region.End = EndIndex;
+                    List.get(List.size() - 1).setEnd(EndIndex);
                 }
                 if (EndIndex < Chr.Size) {
                     Count++;
-                    List.add(new BedItem("fragment" + Count, new ChrRegion(Chr.Name, EndIndex + 1, 0), Count, new String[0]));
+                    item = new BedItem(Chr.Name, 1,0);
+                    item.setScore(Count);
+                    item.setDescription("fragment" + Count);
+                    List.add(item);
                 }
             }
         }
-        if (List.get(List.size() - 1).getLocation().region.End == 0) {
-            List.get(List.size() - 1).getLocation().region.End = Chr.Size;
+        if (List.get(List.size() - 1).getEnd() == 0) {
+            List.get(List.size() - 1).setEnd(Chr.Size);
         }
         return List;
     }
