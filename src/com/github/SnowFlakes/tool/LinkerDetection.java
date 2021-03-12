@@ -8,8 +8,6 @@ import com.github.SnowFlakes.unit.*;
 import htsjdk.samtools.fastq.FastqRecord;
 import htsjdk.samtools.reference.ReferenceSequence;
 import org.apache.commons.cli.*;
-import org.biojava.nbio.core.sequence.DNASequence;
-import org.biojava.nbio.core.util.SequenceTools;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -108,7 +106,7 @@ public class LinkerDetection {
                 index2 = linkers.get(i).getBaseString().lastIndexOf(subEnzyme2);
                 if (index1 >= 0 && index2 >= 0 && index1 + subEnzyme1.length() < index2 && index1 <= 3 && linkers.get(i).length() - index2 - subEnzyme2.length() <= 3) {
                     ReferenceSequence s = new ReferenceSequence("", linkers.get(i).getContigIndex(), linkers.get(i).getBaseString().substring(index1 + subEnzyme1.length(), index2).getBytes());
-                    if (Tools.ReverseComple(s.getBaseString()).equals(s.getBaseString())) {
+                    if (Tools.ReverseComplement(s.getBaseString()).equals(s.getBaseString())) {
                         linkers.set(i, s);
                     } else {
                         linkers.remove(i);

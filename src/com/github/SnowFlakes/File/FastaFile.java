@@ -5,14 +5,9 @@ import com.github.SnowFlakes.IO.FastaReaderExtension;
 import com.github.SnowFlakes.IO.FastaWriterExtension;
 import com.github.SnowFlakes.IO.HTSWriter;
 import htsjdk.samtools.reference.ReferenceSequence;
-import htsjdk.samtools.util.IOUtil;
-import org.biojava.nbio.core.sequence.io.FastaWriterHelper;
-import org.biojava.nbio.core.sequence.template.Sequence;
-import org.junit.Test;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 
 
@@ -24,9 +19,9 @@ public class FastaFile extends AbstractFile<ReferenceSequence> {
     public static void main(String[] args) {
         FastaFile infile = new FastaFile("test.fna");
         FastaReaderExtension reader = infile.getReader();
-        ReferenceSequence seq ;
+        ReferenceSequence seq;
         ArrayList<ReferenceSequence> list = new ArrayList<>();
-        while ((seq= reader.ReadRecord())!=null){
+        while ((seq = reader.ReadRecord()) != null) {
 //            seq = new ReferenceSequence(seq.getName().split("\\s+")[0],0, seq.getBases());
             list.add(seq);
         }

@@ -3,6 +3,9 @@ package com.github.SnowFlakes.tool;
 import com.github.SnowFlakes.File.AbstractFile;
 import com.github.SnowFlakes.unit.Chromosome;
 // import com.github.SnowFlakes.unit.Opts;
+import htsjdk.samtools.reference.ReferenceSequence;
+import htsjdk.tribble.annotation.Strand;
+import htsjdk.tribble.gff.Gff3BaseData;
 import org.apache.commons.math3.linear.RealMatrix;
 
 import sun.font.FontDesignMetrics;
@@ -171,8 +174,8 @@ public class Tools {
     }
 
     public static double UnitTrans(double Num, String PrimaryUint, String TransedUint) {
-        String[] Unit = new String[] { "B", "b", "K", "k", "M", "m", "G", "g" };
-        Double[] Value = new Double[] { 1D, 1D, 1e3, 1e3, 1e6, 1e6, 1e9, 1e9 };
+        String[] Unit = new String[]{"B", "b", "K", "k", "M", "m", "G", "g"};
+        Double[] Value = new Double[]{1D, 1D, 1e3, 1e3, 1e6, 1e6, 1e9, 1e9};
         HashMap<String, Double> UnitMap = new HashMap<>();
         for (int i = 0; i < Unit.length; i++) {
             UnitMap.put(Unit[i], Value[i]);
@@ -208,30 +211,35 @@ public class Tools {
         return Kmer;
     }
 
-    public static String ReverseComple(String str) {
-        char[] RevComStr = new StringBuffer(str).reverse().toString().toCharArray();
-        for (int k = 0; k < RevComStr.length; k++) {
-            switch (RevComStr[k]) {
+    public static byte[] ReverseComplement(byte[] str) {
+        int len = str.length;
+        byte[] RevComStr = new byte[len];
+        for (int k = 0; k < len; k++) {
+            switch (str[k]) {
                 case 'A':
                 case 'a':
-                    RevComStr[k] = 'T';
+                    RevComStr[len - 1 - k] = 'T';
                     break;
                 case 'T':
                 case 't':
-                    RevComStr[k] = 'A';
+                    RevComStr[len - 1 - k] = 'A';
                     break;
                 case 'C':
                 case 'c':
-                    RevComStr[k] = 'G';
+                    RevComStr[len - 1 - k] = 'G';
                     break;
                 case 'G':
                 case 'g':
-                    RevComStr[k] = 'C';
+                    RevComStr[len - 1 - k] = 'C';
             }
         }
-        return new String(RevComStr);
-
+        return RevComStr;
     }
+
+    public static String ReverseComplement(String str) {
+        return Arrays.toString(ReverseComplement(str.getBytes()));
+    }
+
 
     public static void DrawStringCenter(Graphics2D g, String s, Font t, int x, int y, double rotate_theta) {
         FontDesignMetrics metrics = FontDesignMetrics.getMetrics(t);
@@ -241,6 +249,19 @@ public class Tools {
         affineTransform.rotate(rotate_theta, (float) (StrWidth) / 2, (float) (StrHeight) / 2 - metrics.getAscent());// anchorx和anchory表示相对字符串原点坐标的值
         g.setFont(t.deriveFont(affineTransform));
         g.drawString(s, x - StrWidth / 2, y + metrics.getAscent() - StrHeight / 2);
+    }
+
+    public static ReferenceSequence GetSubSeq(ReferenceSequence ref, Gff3BaseData data) {
+        if (!ref.getName().equals(data.getContig())) {
+            System.err.println("Contig name: [" + data.getContig() + "] not equal to reference seq name: [" + ref.getName() + "]");
+            return null;
+        }
+        byte[] sub_seq = new byte[data.getEnd() - data.getStart() + 1];
+        System.arraycopy(ref.getBases(), data.getStart() - 1, sub_seq, 0, sub_seq.length);
+        if (data.getStrand() == Strand.NEGATIVE) {
+            sub_seq = ReverseComplement(sub_seq);
+        }
+        return new ReferenceSequence(data.getName(), 0, sub_seq);
     }
 
 }
