@@ -61,7 +61,7 @@ public class FastqExtract {
             while ((line = list_reader.readLine()) != null) {
                 IDList.add(line);
             }
-            listfile.ReadClose();
+            list_reader.close();
         }
         if (ItemNum <= 0) {
             TempFile = inputFile;

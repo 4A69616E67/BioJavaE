@@ -437,19 +437,19 @@ public class CreateMatrix {
 
     private int[] IndexParse(BedPeFile file) throws IOException {
         int[] Index = new int[6];
-        switch (file.BedpeDetect()) {
-            case BedpePointFormat:
-                Index = new int[] { 0, 1, 1, 2, 3, 3 };
-                break;
-            case BedpeRegionFormat:
-                Index = new int[] { 0, 1, 2, 3, 4, 5 };
-                break;
-            case EmptyFile:
-                break;
-            default:
-                System.err.println(new Date() + "\t" + "[" + CreateMatrix.class.getName() + "]\tError format!");
-                System.exit(1);
-        }
+        Index = new int[] { 0, 1, 2, 3, 4, 5 };
+//        switch (file.BedpeDetect()) {
+//            case BedpePointFormat:
+//                Index = new int[] { 0, 1, 1, 2, 3, 3 };
+//                break;
+//            case BedpeRegionFormat:
+//                break;
+//            case EmptyFile:
+//                break;
+//            default:
+//                System.err.println(new Date() + "\t" + "[" + CreateMatrix.class.getName() + "]\tError format!");
+//                System.exit(1);
+//        }
         return Index;
     }
 }

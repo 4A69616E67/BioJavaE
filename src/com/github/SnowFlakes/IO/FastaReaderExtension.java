@@ -9,7 +9,7 @@ public class FastaReaderExtension implements HTSReader<ReferenceSequence> {
     private FastaSequenceFile file;
 
     public FastaReaderExtension(File file) {
-        this.file = new FastaSequenceFile(file, false);
+        this.file = new FastaSequenceFile(file, true);
     }
 
     @Override
