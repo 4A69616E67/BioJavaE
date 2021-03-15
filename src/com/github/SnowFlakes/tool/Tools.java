@@ -4,10 +4,15 @@ import com.github.SnowFlakes.File.AbstractFile;
 import com.github.SnowFlakes.unit.Chromosome;
 // import com.github.SnowFlakes.unit.Opts;
 import htsjdk.samtools.reference.ReferenceSequence;
+import htsjdk.samtools.util.StringUtil;
 import htsjdk.tribble.annotation.Strand;
 import htsjdk.tribble.gff.Gff3BaseData;
+import htsjdk.tribble.gff.Gff3Feature;
 import org.apache.commons.math3.linear.RealMatrix;
 
+import org.biojava.nbio.core.exceptions.CompoundNotFoundException;
+import org.biojava.nbio.core.sequence.DNASequence;
+import org.biojava.nbio.core.sequence.RNASequence;
 import sun.font.FontDesignMetrics;
 
 import java.awt.*;
@@ -237,7 +242,7 @@ public class Tools {
     }
 
     public static String ReverseComplement(String str) {
-        return Arrays.toString(ReverseComplement(str.getBytes()));
+        return StringUtil.bytesToString(ReverseComplement(str.getBytes()));
     }
 
 
@@ -251,17 +256,18 @@ public class Tools {
         g.drawString(s, x - StrWidth / 2, y + metrics.getAscent() - StrHeight / 2);
     }
 
-    public static ReferenceSequence GetSubSeq(ReferenceSequence ref, Gff3BaseData data) {
-        if (!ref.getName().equals(data.getContig())) {
-            System.err.println("Contig name: [" + data.getContig() + "] not equal to reference seq name: [" + ref.getName() + "]");
+    public static RNASequence GetRNASeq(DNASequence ref, Gff3Feature feature) throws CompoundNotFoundException {
+        org.biojava.nbio.core.sequence.Strand strand = feature.getStrand() == Strand.NEGATIVE ? org.biojava.nbio.core.sequence.Strand.NEGATIVE : org.biojava.nbio.core.sequence.Strand.POSITIVE;
+        StringBuilder rna_seq = new StringBuilder();
+        for (Gff3Feature exon : feature.getChildren()) {
+            if (exon.getType().compareToIgnoreCase("CDS") == 0) {
+                rna_seq.append(ref.getSequenceAsString(exon.getStart(), exon.getEnd(), strand));
+            }
+        }
+        if (rna_seq.length() <= 0) {
             return null;
         }
-        byte[] sub_seq = new byte[data.getEnd() - data.getStart() + 1];
-        System.arraycopy(ref.getBases(), data.getStart() - 1, sub_seq, 0, sub_seq.length);
-        if (data.getStrand() == Strand.NEGATIVE) {
-            sub_seq = ReverseComplement(sub_seq);
-        }
-        return new ReferenceSequence(data.getName(), 0, sub_seq);
+        return new DNASequence(rna_seq.toString()).getRNASequence();
     }
 
 }

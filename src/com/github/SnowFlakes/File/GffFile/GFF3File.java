@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 
 /**
  * Created by snowf on 2019/5/4.
@@ -41,50 +42,6 @@ public class GFF3File extends AbstractFile<Gff3Feature> {
     }
 
     public static void main(String[] args) throws IOException {
-//        GFF3File file = new GFF3File("XENTR_10.0_GCF.Chr2.gff3");
-//        File outfile = new File("test.out.gff3");
-        FastaReaderExtension fastaReaderExtension = new FastaFile("test.fna").getReader();
-        ReferenceSequence seq;
-        ArrayList<ReferenceSequence> ref_list = new ArrayList<>();
-        while ((seq = fastaReaderExtension.ReadRecord()) != null) {
-//            seq = new ReferenceSequence(seq.getName().split("\\s+")[0],0, seq.getBases());
-            ref_list.add(seq);
-        }
-        fastaReaderExtension.close();
-        GFF3ReaderExtension reader = new GFF3File("XENTR_10.0_GCF.Chr2.gff3").getReader();
-        Gff3Feature feature ;
-        ArrayList<Gff3Feature> gene_list = new ArrayList<>();
-        while ((feature = reader.ReadRecord()) != null) {
-            if (feature.getBaseData().getType().equals("gene")){
-//                gene_list.add(feature);
-                for (Gff3Feature mRNA: feature.getChildren()){
-                    ArrayList<byte[]> ORF_Seq=new ArrayList<>();
-                    for (Gff3Feature CDS : mRNA.getChildren()){
-                        if (CDS.getBaseData().getType().compareToIgnoreCase("CDS")==0){
-                            ReferenceSequence cds=null;
-                            for (ReferenceSequence ref : ref_list){
-                                if (ref.getName().equals(CDS.getContig())){
-                                    cds = Tools.GetSubSeq(ref,CDS.getBaseData());
-                                    break;
-                                }
-                            }
-                            ORF_Seq.add(cds.getBases());
-//                            if(CDS.getBaseData().getStrand()== Strand.POSITIVE){
-//                            }else {
-//                                ORF_Seq.add(0, cds.getBases());
-//                            }
-                        }
-                    }
-                    StringBuilder Join_ORF_Seq = new StringBuilder();
-                    for (byte[] orf_seq : ORF_Seq){
-                        Join_ORF_Seq.append(StringUtil.bytesToString(orf_seq));
-                    }
-                    ReferenceSequence mRNA_Seq = new ReferenceSequence(mRNA.getName(), 0,Join_ORF_Seq.toString().getBytes());
-                    System.out.println(">"+mRNA_Seq.getName()+"\n"+mRNA_Seq.getBaseString());
-                }
-            }
-        }
-        reader.close();
 
     }
 
@@ -135,4 +92,23 @@ public class GFF3File extends AbstractFile<Gff3Feature> {
 //        }
 //        return list.get(MinIndex);
 //    }
+    public static class GFF3FeatureComparator implements Comparator<Gff3Feature> {
+
+        @Override
+        public int compare(Gff3Feature o1, Gff3Feature o2) {
+            if (o1.getContig().compareToIgnoreCase(o2.getContig()) == 0) {
+                if (o1.getStart() - o2.getStart() == 0) {
+                    if (o1.getEnd() - o2.getEnd() == 0) {
+                        return 0;
+                    } else {
+                        return o1.getEnd() - o2.getEnd();
+                    }
+                } else {
+                    return o1.getStart() - o2.getStart();
+                }
+            } else {
+                return o1.getContig().compareToIgnoreCase(o2.getContig());
+            }
+        }
+    }
 }

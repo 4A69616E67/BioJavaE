@@ -18,10 +18,6 @@ public class BedWriterExtension extends BufferedWriter implements HTSWriter<BedI
         super(out);
     }
 
-    public BedWriterExtension(Writer out, int sz) {
-        super(out, sz);
-    }
-
     @Override
     public synchronized void WriterRecord(BedItem o) {
         StringBuilder out_string = new StringBuilder(o.getContig() + "\t" + o.getStart() + "\t" + o.getEnd() + "\t" + o.getName() + "\t" + o.getScore() + "\t" + o.getStrand());

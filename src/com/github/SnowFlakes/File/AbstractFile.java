@@ -30,7 +30,7 @@ public abstract class AbstractFile<E> extends File {
         description = file.description;
     }
 
-    public void CalculateItemNumber() throws IOException {
+    public void CalculateItemNumber() {
         ItemNum = 0;
         if (!isFile()) {
             return;
@@ -170,7 +170,7 @@ public abstract class AbstractFile<E> extends File {
         E lines;
         for (AbstractFile<E> x : files) {
             System.out.println(new Date() + "\tMerge " + x.getName() + " to " + getName());
-            HTSReader<E>  reader = x.getReader();
+            HTSReader<E> reader = x.getReader();
             while ((lines = reader.ReadRecord()) != null) {
                 writer.WriterRecordln(lines);
                 ItemNum++;
@@ -237,11 +237,8 @@ public abstract class AbstractFile<E> extends File {
 
     public long getItemNum() {
         if (ItemNum <= 0) {
-            try {
-                CalculateItemNumber();
-            } catch (IOException e) {
-                System.err.println("Warning! can't get accurate item number, current item number: " + getName() + " " + ItemNum);
-            }
+            CalculateItemNumber();
+            System.err.println("Warning! can't get accurate item number, current item number: " + getName() + " " + ItemNum);
         }
         return ItemNum;
     }
