@@ -13,7 +13,7 @@ import java.util.Arrays;
 public class BedReaderExtension extends BufferedLineReader implements HTSReader<BedItem> {
     protected BEDCodec codec = new BEDCodec();
     protected ArrayList<String> header;
-    protected BedFile.Format format = BedFile.Format.BED6;
+    protected BedFile.Format format = BedFile.Format.NONE;
 
     public BedReaderExtension(InputStream is) {
         super(is);
@@ -31,19 +31,23 @@ public class BedReaderExtension extends BufferedLineReader implements HTSReader<
 
     @Override
     public BedItem ReadRecord() {
-        String[] tokens = readLine().split("\\s+");
+        String line = readLine();
+        if (line==null){
+            return null;
+        }
+        String[] tokens = line.split("\\s+");
         BedItem item;
         switch (format) {
             case BED6:
                 item = new BedItem(codec.decode(Arrays.copyOfRange(tokens, 0, Math.min(6, tokens.length))));
-                item.Extends = Arrays.copyOfRange(tokens, 6, tokens.length);
+                item.Extends = new ArrayList<>(Arrays.asList(Arrays.copyOfRange(tokens, 6, tokens.length)));
                 break;
             case BED12:
                 item = new BedItem(codec.decode(Arrays.copyOfRange(tokens, 0, Math.min(12, tokens.length))));
-                item.Extends = Arrays.copyOfRange(tokens, 12, tokens.length);
+                item.Extends = new ArrayList<>(Arrays.asList(Arrays.copyOfRange(tokens, 12, tokens.length)));
                 break;
             default:
-                return null;
+                item= new BedItem(codec.decode(tokens));
         }
         return item;
     }
@@ -73,5 +77,9 @@ public class BedReaderExtension extends BufferedLineReader implements HTSReader<
 
     public void setFormat(BedFile.Format format) {
         this.format = format;
+    }
+
+    public void setCodec(BEDCodec codec) {
+        this.codec = codec;
     }
 }

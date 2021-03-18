@@ -3,8 +3,10 @@ package com.github.SnowFlakes.File.BedFile;
 import com.github.SnowFlakes.File.AbstractFile;
 import com.github.SnowFlakes.IO.BedReaderExtension;
 import com.github.SnowFlakes.IO.BedWriterExtension;
+import htsjdk.tribble.bed.BEDCodec;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Comparator;
 
 /**
@@ -12,13 +14,24 @@ import java.util.Comparator;
  */
 public class BedFile extends AbstractFile<BedItem> {
     public enum Format {
-        BED6, BED12
+        BED6, BED12, NONE
     }
-
-    public short DeBugLevel = 0;
 
     public BedFile(String pathname) {
         super(pathname);
+    }
+
+    public static void main(String[] args) {
+        BedFile infile = new BedFile("test.bed");
+        BedItem item ;
+        BedReaderExtension reader = infile.getReader();
+        reader.setFormat(Format.BED6);
+        reader.setCodec(new BEDCodec(BEDCodec.StartOffset.ZERO));
+        ArrayList<BedItem> list = new ArrayList<>();
+        while ((item= reader.ReadRecord())!=null){
+            list.add(item);
+        }
+        System.out.println(list.size());
     }
 
     @Override

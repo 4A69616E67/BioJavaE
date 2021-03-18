@@ -6,6 +6,7 @@ import htsjdk.tribble.bed.BEDCodec;
 import htsjdk.tribble.bed.BEDFeature;
 import htsjdk.tribble.bed.FullBEDFeature;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 
 /**
@@ -14,7 +15,7 @@ import java.util.Comparator;
 
 public class BedItem extends FullBEDFeature {
     public static BEDCodec codec = new BEDCodec();
-    public String[] Extends;
+    public ArrayList<String> Extends;
 
     public BedItem(String chr, int start, int end) {
         super(chr, start, end);
@@ -45,10 +46,6 @@ public class BedItem extends FullBEDFeature {
     public static BEDPEItem ToBEDPE(BedItem a, BedItem b) {
         return new BEDPEItem(a, b);
     }
-
-//    public ChrRegion getLocation() {
-//        return new ChrRegion(chr, start, end, strand);
-//    }
 
     public static class LocationComparator implements Comparator<BedItem> {
 

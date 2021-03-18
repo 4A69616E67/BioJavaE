@@ -1,14 +1,16 @@
+import com.github.SnowFlakes.File.BedFile.BedFile;
 import com.github.SnowFlakes.File.BedFile.BedItem;
 import com.github.SnowFlakes.File.FastaFile;
 import com.github.SnowFlakes.File.GffFile.GFF3File;
+import com.github.SnowFlakes.IO.BedReaderExtension;
 import com.github.SnowFlakes.IO.FastaReaderExtension;
 import com.github.SnowFlakes.IO.GFF3ReaderExtension;
 import com.github.SnowFlakes.tool.Tools;
 import htsjdk.samtools.reference.ReferenceSequence;
 import htsjdk.samtools.util.IOUtil;
 import htsjdk.tribble.annotation.Strand;
+import htsjdk.tribble.bed.BEDCodec;
 import htsjdk.tribble.gff.Gff3Feature;
-import org.apache.commons.lang3.StringUtils;
 import org.biojava.nbio.core.exceptions.CompoundNotFoundException;
 import org.biojava.nbio.core.sequence.DNASequence;
 import org.biojava.nbio.core.sequence.RNASequence;
@@ -22,7 +24,6 @@ public class App {
         File genome_file = new File(args[0]);
         File anno_file = new File(args[1]);
         File snv_file = new File(args[2]);
-        BedItem test_region = new BedItem("Chr2", 104659475, 104659475);
         FastaReaderExtension fastaReaderExtension = new FastaFile(genome_file).getReader();
         ReferenceSequence seq;
         HashMap<String, ArrayList<Gff3Feature>> AnnotationList = new HashMap<>();
@@ -40,13 +41,13 @@ public class App {
                     AnnotationList.put(feature.getContig(), new ArrayList<>());
                 }
                 AnnotationList.get(feature.getContig()).add(feature);
-            }else if(feature.getType().compareToIgnoreCase("mRNA")==0 || feature.getType().compareToIgnoreCase("transcript")==0){
-                if (!RefList.containsKey(feature.getContig())){
+            } else if (feature.getType().compareToIgnoreCase("mRNA") == 0 || feature.getType().compareToIgnoreCase("transcript") == 0) {
+                if (!RefList.containsKey(feature.getContig())) {
                     continue;
                 }
-                RNASequence rna = Tools.GetRNASeq(RefList.get(feature.getContig()),feature);
-                if (rna!=null){
-                    System.out.println(">"+ feature.getName());
+                RNASequence rna = Tools.GetRNASeq(RefList.get(feature.getContig()), feature);
+                if (rna != null) {
+                    System.out.println(">" + feature.getName());
                     System.out.println(rna.getProteinSequence().getSequenceAsString());
                 }
             }
@@ -55,68 +56,66 @@ public class App {
         System.err.println("read gff file finished");
         //----------------------------------------------------------------------------------------------------
         //read vcf file
-//        BufferedReader reader1 = new BufferedReader(IOUtil.openFileForBufferedReading(snv_file));
-//        String line;
-//        int count = 0;
-//        org.biojava.nbio.core.sequence.Strand strand;
-//        while ((line = reader1.readLine()) != null) {
-//            String[] strs = line.split("\\s+");
-//            String[] snvs = strs[3].split(",");
-//            test_region = new BedItem(strs[0], Integer.parseInt(strs[1]), Integer.parseInt(strs[2]));
-//            test_region.setDescription(strs[4]);
-//            for (String snv : snvs) {
-//                if (snv.matches("[^ATCGatcg]")) {
-//                    continue;
-//                }
-////                test_region.setName(snv);
-//                //--------------------------------------------------------------------------------------
-//                test_region.Extends = new String[5];
-//                test_region.Extends[0] = "Intergenic";
-//                test_region.Extends[1] = ".";
-//                String ori_seq = RefList.get(test_region.getContig()).getSequenceAsString(test_region.getStart(), test_region.getEnd(), org.biojava.nbio.core.sequence.Strand.POSITIVE);
-//                test_region.Extends[2] = ori_seq + "->" + snv;
-//                test_region.Extends[3] = ".";
-//                test_region.Extends[4] = ".";
-//                //------------------------------------------------------------------------------------
-//                for (Gff3Feature gff3Feature : AnnotationList.get(test_region.getContig())) {
-//                    if (gff3Feature.contains(test_region)) {
-//                        if(SearchMutation(RefList.get(test_region.getContig()), gff3Feature, test_region, snv)){
-//                            break;
-//                        }
-//                    }
-//                }
-//                System.out.println(test_region.getContig() + "\t" + test_region.getStart() + "\t" + String.join("\t", test_region.Extends) + "\t" + test_region.getDescription());
-//            }
-//
-//            count++;
-//            if (count % 1000000 == 0) {
-//                System.err.println(count / 1000000 + " Million process");
-//            }
-//        }
-//        System.err.println("process " + count + " snv");
-//        reader1.close();
+        BedReaderExtension reader1 = new BedReaderExtension(snv_file);
+        reader1.setFormat(BedFile.Format.BED6);
+        reader1.setCodec(new BEDCodec(BEDCodec.StartOffset.ZERO));
+        BedItem item;
+        int count = 0;
+        while ((item = reader1.ReadRecord()) != null) {
+            for (String snv : item.Extends.get(0).split(",")) {
+                if (snv.matches("[^ATCGatcg]")) {
+                    continue;
+                }
+                //--------------------------------------------------------------------------------------
+                String[] Extends = new String[6];
+                Extends[0] = Extends[3] = Extends[4] = ".";
+                Extends[1] = "Intergenic";
+                String ori_seq = RefList.get(item.getContig()).getSequenceAsString(item.getStart(), item.getEnd(), org.biojava.nbio.core.sequence.Strand.POSITIVE).toUpperCase();
+                Extends[2] = ori_seq + "->" + snv;
+                try {
+                    Extends[5] = RefList.get(item.getContig()).getSequenceAsString(item.getStart()-10, item.getEnd()+10, org.biojava.nbio.core.sequence.Strand.POSITIVE).toUpperCase();
+                }catch (IndexOutOfBoundsException e){
+                    Extends[5] = ".";
+                }
+                item.Extends = new ArrayList<>(Arrays.asList(Extends));
+                //------------------------------------------------------------------------------------
+                for (Gff3Feature gff3Feature : AnnotationList.get(item.getContig())) {
+                    if (gff3Feature.contains(item)) {
+                        if (SearchMutation(RefList.get(item.getContig()), gff3Feature, item, snv)) {
+                            break;
+                        }
+                    }
+                }
+                System.out.println(item.getContig() + "\t" + item.getStart() + "\t" + item.getEnd() + "\t" + item.getName() + "\t" + item.getScore() + "\t" + item.getStrand() + "\t" + String.join("\t", item.Extends));
+            }
+
+            count++;
+            if (count % 1000000 == 0) {
+                System.err.println(count / 1000000 + " Million process");
+            }
+        }
+        System.err.println("process " + count + " snv");
+        reader1.close();
 
     }
 
     public static boolean SearchMutation(DNASequence ref, Gff3Feature feature, BedItem region, String snv) throws CompoundNotFoundException {
         boolean flag = false;
-        region.Extends[0] = feature.getName();
-        region.Extends[1] = feature.getType();
-        org.biojava.nbio.core.sequence.Strand strand;
+        String ori_seq;
+        String new_seq;
+        region.Extends.set(0, feature.getName());
+        region.Extends.set(1, feature.getType());
         if (feature.getStrand() == Strand.NEGATIVE) {
-            strand = org.biojava.nbio.core.sequence.Strand.NEGATIVE;
-        } else {
-            strand = org.biojava.nbio.core.sequence.Strand.POSITIVE;
+            ori_seq = ref.getSequenceAsString(region.getStart(), region.getEnd(), org.biojava.nbio.core.sequence.Strand.NEGATIVE).toUpperCase();
+            new_seq = Tools.ReverseComplement(snv);
+            region.Extends.set(2,ori_seq + "->" + new_seq);
+            try {
+                region.Extends.set(5,ref.getSequenceAsString(region.getStart()-10, region.getEnd()+10, org.biojava.nbio.core.sequence.Strand.NEGATIVE).toUpperCase());
+            }catch (IndexOutOfBoundsException ignored){
+
+            }
         }
         //---------------------------------------------------------------
-        String ori_seq = ref.getSequenceAsString(region.getStart(), region.getEnd(), strand);
-        String new_seq = snv;
-        if (strand == org.biojava.nbio.core.sequence.Strand.NEGATIVE) {
-            new_seq = Tools.ReverseComplement(new_seq);
-        }
-        region.Extends[2] = ori_seq + "->" + new_seq;
-        region.Extends[3] = ".";
-        region.Extends[4] = ".";
         //----------------------------------------------------------------
         for (Gff3Feature m_rna : feature.getChildren()) {
             if (m_rna.contains(region)) {
@@ -129,7 +128,7 @@ public class App {
                             } else {
                                 len += cds.getEnd() - region.getEnd();
                             }
-                            region.Extends[1] = cds.getType();
+                            region.Extends.set(1,cds.getType());
                             flag = true;
                             break;
                         } else {
@@ -140,20 +139,19 @@ public class App {
                 if (flag) {
                     RNASequence rna = Tools.GetRNASeq(ref, m_rna);
                     int l = len % 3;
-                    ori_seq = rna.getSubSequence(len + 1 - l, len + 3 - l).getSequenceAsString();
-                    new_seq = ori_seq;
-                    if (strand == org.biojava.nbio.core.sequence.Strand.NEGATIVE) {
-                        new_seq = new_seq.substring(0, l) + Tools.ReverseComplement(snv) + new_seq.substring(l + 1);
+                    ori_seq = rna.getSubSequence(len + 1 - l, len + 3 - l).getSequenceAsString().toUpperCase();
+                    if (m_rna.getStrand() == Strand.NEGATIVE) {
+                        new_seq = ori_seq.substring(0, l) + Tools.ReverseComplement(snv) + ori_seq.substring(l + 1);
                     } else {
-                        new_seq = new_seq.substring(0, l) + snv + new_seq.substring(l + 1);
+                        new_seq = ori_seq.substring(0, l) + snv + ori_seq.substring(l + 1);
                     }
                     new_seq = new_seq.replaceAll("T", "U");
-                    region.Extends[2] = ori_seq + "->" + new_seq;
-                    region.Extends[3] = new RNASequence(ori_seq).getProteinSequence().getSequenceAsString() + "->" + new RNASequence(new_seq).getProteinSequence().getSequenceAsString();
-                    region.Extends[4] = String.valueOf(len / 3 + 1);
+                    region.Extends.set(2,ori_seq + "->" + new_seq);
+                    region.Extends.set(3, new RNASequence(ori_seq).getProteinSequence().getSequenceAsString() + "->" + new RNASequence(new_seq).getProteinSequence().getSequenceAsString());
+                    region.Extends.set(4,  String.valueOf(len / 3 + 1));
                     break;
                 } else {
-                    region.Extends[1] = m_rna.getType();
+                    region.Extends.set(1,m_rna.getType());
                 }
             }
         }
