@@ -14,5 +14,6 @@
     <orderEntry type="library" name="org.apache.commons:commons-math3:3.6" level="project" />
     <orderEntry type="library" name="org.apache.commons:commons-lang3:3.11" level="project" />
     <orderEntry type="library" name="org.apache.commons:commons-configuration2:2.7" level="project" />
+    <orderEntry type="library" name="juicer_tools_1.22.01" level="project" />
   </component>
 </module>

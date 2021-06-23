@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="juicer_tools_1.22.01">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/../../Hi-C/juicer_tools_1.22.01.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../Hi-C/juicer_tools_1.22.01-src.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/../../Hi-C/juicer_tools_1.22.01.jar!/doc" />
+      <root url="jar://$PROJECT_DIR$/../../Hi-C/juicer_tools_1.22.01-src.jar!/doc" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../../Hi-C/juicer_tools_1.22.01.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../../Hi-C/juicer_tools_1.22.01-src.jar!/" />
+    </SOURCES>
+  </library>
+</component>
